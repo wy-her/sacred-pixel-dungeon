@@ -1,0 +1,330 @@
+apply plugin: 'java'
+
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+java.sourceCompatibility = java.targetCompatibility = appJavaCompatibility
+
+def gdxTeaVMVersion = '1.5.4'
+
+sourceSets.main.resources.srcDirs += ["${project(':core').projectDir}/src/main/assets"]
+
+project.ext.mainClassName = "com.sacredpixel.sacredpixeldungeon.teavm.TeaVMBuilder"
+
+dependencies {
+    implementation project(':core')
+    implementation project(':SPD-classes')
+    implementation project(':services')
+    implementation project(':services:updates:debugUpdates')
+    implementation project(':services:news:debugNews')
+
+    // LibGDX core
+    implementation "com.badlogicgames.gdx:gdx:$gdxVersion"
+
+    // gdx-teavm web backend (replaces gdx-backend-gwt)
+    implementation "com.github.xpenatan.gdx-teavm:backend-web:$gdxTeaVMVersion"
+
+    // FreeType (compile-only; our stub replaces it at runtime)
+    compileOnly "com.badlogicgames.gdx:gdx-freetype:$gdxVersion"
+
+    // org.json (compile-only; our emulation replaces it)
+    compileOnly "org.json:json:20170516"
+}
+
+sourceSets.main.java {
+    srcDirs = [
+        'src/main/java',
+    ]
+}
+
+// Build release (TeaVM compilation) - outputs to build/dist/cloudflare/webapp/
+tasks.register('buildRelease', JavaExec) {
+    dependsOn classes
+    mainClass = project.mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+    args = ['--output-dir', 'build/dist/cloudflare']
+    jvmArgs = ['-Xmx2G']
+    // After TeaVM build, copy custom webapp files and optimize preloading
+    doLast {
+        def webappDir = "${layout.buildDirectory.get().asFile}/dist/cloudflare/webapp"
+        // Copy custom index.html over generated one
+        copy {
+            from 'webapp/index.html'
+            into webappDir
+        }
+        // Copy styles.css
+        copy {
+            from 'webapp/styles.css'
+            into webappDir
+        }
+        // Copy fonts
+        copy {
+            from 'webapp/fonts'
+            into "${webappDir}/fonts"
+        }
+        // Copy banner
+        copy {
+            from 'webapp/banner.png'
+            into webappDir
+        }
+        // Copy pako.min.js for DEFLATE compression (data sync feature)
+        copy {
+            from 'webapp/scripts/pako.min.js'
+            into "${webappDir}/scripts"
+        }
+        // Disable preloading for music files (48MB total).
+        // Music is loaded on-demand when each track is played.
+        // This reduces initial download from ~74MB to ~26MB.
+        def preloadFile = file("${webappDir}/assets/preload.txt")
+        if (preloadFile.exists()) {
+            def content = preloadFile.text
+            // Change music files from preload=1 to preload=0
+            content = content.replaceAll('(i:b:/music/[^:]+:[^:]+):1', '$1:0')
+            // Remove woff2 font entries completely (fonts are loaded via CSS @font-face, not asset preloader)
+            content = content.replaceAll('(?m)^i:b:/fonts/[^:]+\\.woff2:[^:]+:[01]\\r?\\n', '')
+            // Remove OFL.txt entry
+            content = content.replaceAll('(?m)^i:b:/fonts/OFL\\.txt:[^:]+:[01]\\r?\\n', '')
+            preloadFile.text = content
+            println "Disabled preloading for music files and removed woff2 font entries from preload.txt"
+        }
+        // Remove duplicate woff2 fonts from assets/fonts/ (saves 28MB)
+        // These fonts are already in webapp/fonts/ and loaded via CSS @font-face.
+        // Only pixel_font.png and pixel_font.ttf are needed in assets/fonts/.
+        def assetsFontsDir = file("${webappDir}/assets/fonts")
+        if (assetsFontsDir.exists()) {
+            assetsFontsDir.listFiles().each { f ->
+                if (f.name.endsWith('.woff2') || f.name == 'OFL.txt') {
+                    f.delete()
+                    println "Removed duplicate font: assets/fonts/${f.name}"
+                }
+            }
+        }
+        // Remove fonts/original/ folder (backup of pre-subset fonts, not needed in deployment)
+        def originalFontsDir = file("${webappDir}/fonts/original")
+        if (originalFontsDir.exists()) {
+            originalFontsDir.deleteDir()
+            println "Removed fonts/original/ folder (saves 28MB)"
+        }
+    }
+}
+
+// Build debug (TeaVM compilation with debug flags)
+tasks.register('buildDebug', JavaExec) {
+    dependsOn classes
+    mainClass = project.mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+    args = ['debug']
+    jvmArgs = ['-Xmx2G']
+    doLast {
+        copy {
+            from 'webapp/index.html'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp"
+        }
+        copy {
+            from 'webapp/styles.css'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp"
+        }
+        copy {
+            from 'webapp/fonts'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp/fonts"
+        }
+        copy {
+            from 'webapp/banner.png'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp"
+        }
+        copy {
+            from 'webapp/scripts/pako.min.js'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp/scripts"
+        }
+        // Disable preloading for music files and remove woff2 entries (same as release build)
+        def preloadFile = file("${layout.buildDirectory.get().asFile}/dist/webapp/assets/preload.txt")
+        if (preloadFile.exists()) {
+            def content = preloadFile.text
+            content = content.replaceAll('(i:b:/music/[^:]+:[^:]+):1', '$1:0')
+            content = content.replaceAll('(?m)^i:b:/fonts/[^:]+\\.woff2:[^:]+:[01]\\r?\\n', '')
+            content = content.replaceAll('(?m)^i:b:/fonts/OFL\\.txt:[^:]+:[01]\\r?\\n', '')
+            preloadFile.text = content
+            println "Disabled preloading for music files and removed woff2 font entries from preload.txt"
+        }
+        // Remove duplicate woff2 fonts from assets/fonts/
+        def assetsFontsDir = file("${layout.buildDirectory.get().asFile}/dist/webapp/assets/fonts")
+        if (assetsFontsDir.exists()) {
+            assetsFontsDir.listFiles().each { f ->
+                if (f.name.endsWith('.woff2') || f.name == 'OFL.txt') {
+                    f.delete()
+                }
+            }
+        }
+        // Remove fonts/original/ folder
+        def originalFontsDir = file("${layout.buildDirectory.get().asFile}/dist/webapp/fonts/original")
+        if (originalFontsDir.exists()) {
+            originalFontsDir.deleteDir()
+            println "Removed fonts/original/ folder (saves 28MB)"
+        }
+    }
+}
+
+// Run with built-in Jetty server (release)
+tasks.register('runRelease', JavaExec) {
+    dependsOn classes
+    mainClass = project.mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+    args = ['run']
+    jvmArgs = ['-Xmx2G']
+    doFirst {
+        copy {
+            from 'webapp/index.html'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp"
+        }
+        copy {
+            from 'webapp/styles.css'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp"
+        }
+        copy {
+            from 'webapp/fonts'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp/fonts"
+        }
+        copy {
+            from 'webapp/banner.png'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp"
+        }
+        copy {
+            from 'webapp/scripts/pako.min.js'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp/scripts"
+        }
+        def preloadFile = file("${layout.buildDirectory.get().asFile}/dist/webapp/assets/preload.txt")
+        if (preloadFile.exists()) {
+            def content = preloadFile.text
+            content = content.replaceAll('(i:b:/music/[^:]+:[^:]+):1', '$1:0')
+            content = content.replaceAll('(?m)^i:b:/fonts/[^:]+\\.woff2:[^:]+:[01]\\r?\\n', '')
+            content = content.replaceAll('(?m)^i:b:/fonts/OFL\\.txt:[^:]+:[01]\\r?\\n', '')
+            preloadFile.text = content
+        }
+        // Remove duplicate woff2 fonts from assets/fonts/
+        def assetsFontsDir = file("${layout.buildDirectory.get().asFile}/dist/webapp/assets/fonts")
+        if (assetsFontsDir.exists()) {
+            assetsFontsDir.listFiles().each { f ->
+                if (f.name.endsWith('.woff2') || f.name == 'OFL.txt') {
+                    f.delete()
+                }
+            }
+        }
+    }
+}
+
+// Build for Appsintoss (with font subsetting) - outputs to build/dist/appsintoss/webapp/
+tasks.register('buildAppsintoss', JavaExec) {
+    dependsOn classes
+    description = 'Build for Appsintoss with subset fonts (100MB limit)'
+    mainClass = project.mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+    args = ['--output-dir', 'build/dist/appsintoss']
+    jvmArgs = ['-Xmx2G']
+    doLast {
+        def webappDir = "${layout.buildDirectory.get().asFile}/dist/appsintoss/webapp"
+        // Copy webapp files (same as buildRelease, but fonts handled separately)
+        copy {
+            from 'webapp/index.html'
+            into webappDir
+        }
+        copy {
+            from 'webapp/styles.css'
+            into webappDir
+        }
+        copy {
+            from 'webapp/banner.png'
+            into webappDir
+        }
+        copy {
+            from 'webapp/scripts/pako.min.js'
+            into "${webappDir}/scripts"
+        }
+
+        // Run font subsetting script (outputs directly to build/dist/appsintoss/webapp/fonts/)
+        def pythonCmd = System.getProperty('os.name').toLowerCase().contains('windows') ? 'python' : 'python3'
+        def fontsOutputDir = "${webappDir}/fonts"
+        println "Running font subsetting script..."
+        def process = new ProcessBuilder(pythonCmd, 'scripts/subset_fonts.py', '--output-dir', fontsOutputDir)
+            .directory(projectDir)
+            .redirectErrorStream(true)
+            .start()
+        process.inputStream.eachLine { println it }
+        def exitCode = process.waitFor()
+        if (exitCode != 0) {
+            throw new GradleException("Font subsetting failed with exit code ${exitCode}")
+        }
+
+        // Disable preloading for music files
+        def preloadFile = file("${webappDir}/assets/preload.txt")
+        if (preloadFile.exists()) {
+            def content = preloadFile.text
+            content = content.replaceAll('(i:b:/music/[^:]+:[^:]+):1', '$1:0')
+            content = content.replaceAll('(?m)^i:b:/fonts/[^:]+\\.woff2:[^:]+:[01]\\r?\\n', '')
+            content = content.replaceAll('(?m)^i:b:/fonts/OFL\\.txt:[^:]+:[01]\\r?\\n', '')
+            preloadFile.text = content
+            println "Disabled preloading for music files and removed woff2 font entries from preload.txt"
+        }
+        // Remove duplicate woff2 fonts from assets/fonts/
+        def assetsFontsDir = file("${webappDir}/assets/fonts")
+        if (assetsFontsDir.exists()) {
+            assetsFontsDir.listFiles().each { f ->
+                if (f.name.endsWith('.woff2') || f.name == 'OFL.txt') {
+                    f.delete()
+                    println "Removed duplicate font: assets/fonts/${f.name}"
+                }
+            }
+        }
+        // fonts/original/ is already excluded from copy
+        println "Appsintoss build complete with subset fonts!"
+    }
+}
+
+// Run with built-in Jetty server (debug)
+tasks.register('runDebug', JavaExec) {
+    dependsOn classes
+    mainClass = project.mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+    args = ['debug', 'run']
+    jvmArgs = ['-Xmx2G']
+    doFirst {
+        // Copy custom webapp files before Jetty starts serving
+        copy {
+            from 'webapp/index.html'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp"
+        }
+        copy {
+            from 'webapp/styles.css'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp"
+        }
+        copy {
+            from 'webapp/fonts'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp/fonts"
+        }
+        copy {
+            from 'webapp/banner.png'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp"
+        }
+        copy {
+            from 'webapp/scripts/pako.min.js'
+            into "${layout.buildDirectory.get().asFile}/dist/webapp/scripts"
+        }
+        // Disable preloading for music files and remove woff2 entries
+        def preloadFile = file("${layout.buildDirectory.get().asFile}/dist/webapp/assets/preload.txt")
+        if (preloadFile.exists()) {
+            def content = preloadFile.text
+            content = content.replaceAll('(i:b:/music/[^:]+:[^:]+):1', '$1:0')
+            content = content.replaceAll('(?m)^i:b:/fonts/[^:]+\\.woff2:[^:]+:[01]\\r?\\n', '')
+            content = content.replaceAll('(?m)^i:b:/fonts/OFL\\.txt:[^:]+:[01]\\r?\\n', '')
+            preloadFile.text = content
+        }
+        // Remove duplicate woff2 fonts from assets/fonts/
+        def assetsFontsDir = file("${layout.buildDirectory.get().asFile}/dist/webapp/assets/fonts")
+        if (assetsFontsDir.exists()) {
+            assetsFontsDir.listFiles().each { f ->
+                if (f.name.endsWith('.woff2') || f.name == 'OFL.txt') {
+                    f.delete()
+                }
+            }
+        }
+    }
+}
+
+build.dependsOn buildRelease

@@ -1,0 +1,15 @@
+# Keystore configuration for release builds
+# Copy this file to local.properties and fill in the values
+# DO NOT commit local.properties to git!
+
+# Path to keystore file (relative to android/app/ directory)
+KEYSTORE_PATH=path/to/your-keystore.keystore
+
+# Keystore password
+KEYSTORE_PASSWORD=your_keystore_password_here
+
+# Key alias
+KEY_ALIAS=sacred-pixel-dungeon
+
+# Key password
+KEY_PASSWORD=your_key_password_here

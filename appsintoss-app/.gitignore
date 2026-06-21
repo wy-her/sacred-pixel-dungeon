@@ -1,0 +1,26 @@
+# Build output
+dist/
+
+# Dependencies
+node_modules/
+
+# Environment variables (contains Firebase keys)
+.env
+.env.local
+.env.*.local
+
+# Appsintoss build artifacts
+.granite/
+*.ait
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini

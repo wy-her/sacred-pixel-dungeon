@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Sacred Pixel Dungeon</string>
+    <string name="title_activity_main">Sacred Pixel Dungeon</string>
+    <string name="package_name">com.sacredpixel.sacredpixeldungeon</string>
+    <string name="custom_url_scheme">com.sacredpixel.sacredpixeldungeon</string>
+</resources>

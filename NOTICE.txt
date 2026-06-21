@@ -1,0 +1,91 @@
+Sacred Pixel Dungeon
+Copyright (C) 2026 AI SOFT
+
+Based on Shattered Pixel Dungeon
+Copyright (C) 2014-2026 Evan Debenham
+
+Based on Pixel Dungeon
+Copyright (C) 2012-2015 Oleg Dolya
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+================================================================================
+
+This product includes the following third-party software:
+
+--------------------------------------------------------------------------------
+LibGDX
+https://libgdx.com/
+Copyright 2011-2024 Mario Zechner, Nathan Sweet
+Licensed under Apache License 2.0
+
+--------------------------------------------------------------------------------
+TeaVM
+https://teavm.org/
+Copyright 2013-2024 Alexey Andreev
+Licensed under Apache License 2.0
+
+--------------------------------------------------------------------------------
+gdx-teavm
+https://github.com/AJ32-dev/gdx-teavm
+Copyright 2024 AJ32-dev
+Licensed under Apache License 2.0
+
+--------------------------------------------------------------------------------
+Firebase JavaScript SDK
+https://firebase.google.com/
+Copyright 2017-2024 Google LLC
+Licensed under Apache License 2.0
+
+--------------------------------------------------------------------------------
+Capacitor
+https://capacitorjs.com/
+Copyright 2017-2024 Ionic
+Licensed under MIT License
+
+--------------------------------------------------------------------------------
+Apps-in-Toss SDK
+https://developers-apps-in-toss.toss.im/
+Copyright 2025 Viva Republica, Inc.
+Licensed under GPL-3.0 License
+
+Note: GPL-3.0 is compatible with this project's GPL-3.0 license.
+The combined work remains under GPL-3.0.
+
+--------------------------------------------------------------------------------
+pako
+https://github.com/nodeca/pako
+Copyright 2014-2017 by Vitaly Puzrin and Andrei Tuputcyn
+Licensed under MIT AND Zlib License
+
+--------------------------------------------------------------------------------
+Inter Font
+https://rsms.me/inter/
+Copyright 2016-2020 The Inter Project Authors (Rasmus Andersson)
+Licensed under SIL Open Font License 1.1
+
+--------------------------------------------------------------------------------
+Noto Sans Font Family
+https://fonts.google.com/noto
+Copyright 2014-2021 Adobe (http://www.adobe.com/), with Reserved Font Name 'Source'
+Licensed under SIL Open Font License 1.1
+
+================================================================================
+
+LICENSE COMPATIBILITY NOTICE
+
+This project is licensed under GPL-3.0. All included third-party software
+uses licenses compatible with GPL-3.0:
+
+- Apache License 2.0: Compatible (one-way, Apache code can be used in GPL)
+- MIT License: Compatible with GPL-3.0
+- Zlib License: Compatible with GPL-3.0
+- SIL Open Font License 1.1: Compatible for font usage
+- GPL-3.0: Same license, fully compatible
+
+================================================================================
+
+For the full text of these licenses, see THIRD_PARTY_LICENSES.md

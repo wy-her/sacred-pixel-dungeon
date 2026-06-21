@@ -1,0 +1,13 @@
+{
+  "appId": "com.sacredpixel.sacredpixeldungeon",
+  "appName": "Sacred Pixel Dungeon",
+  "webDir": "../teavm/build/dist/cloudflare/webapp",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}

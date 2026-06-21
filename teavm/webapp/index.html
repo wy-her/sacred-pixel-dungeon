@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Sacred Pixel Dungeon</title>
+        <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="description" content="Sacred Pixel Dungeon - A roguelike dungeon crawler. Fight monsters, collect items, and escape with the Amulet of Yendor. Play directly in your browser!">
+        <meta name="keywords" content="Sacred Pixel Dungeon, roguelike, dungeon, pixel dungeon, game, HTML5, browser game">
+        <meta name="author" content="AI SOFT">
+        <meta property="og:title" content="Sacred Pixel Dungeon">
+        <meta property="og:description" content="A roguelike dungeon crawler. Play directly in your browser!">
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="https://sacredpixel.net/">
+        <meta property="og:image" content="https://sacredpixel.net/og-image.png">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <link rel="icon" href="assets/interfaces/sacred-logo.png" type="image/png">
+        <link rel="preload" href="fonts/inter-full.woff2" as="font" type="font/woff2" crossorigin>
+        <link rel="stylesheet" href="styles.css">
+        <style>
+            * { margin: 0; padding: 0; }
+            html, body {
+                width: 100%;
+                height: 100%;
+                height: 100dvh;
+                overflow: hidden;
+                background-color: #000;
+            }
+            #canvas {
+                display: block;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100dvh !important;
+                cursor: default;
+                border: none;
+                touch-action: manipulation;
+            }
+        </style>
+    </head>
+    <body oncontextmenu="return false">
+        <noscript>
+            <div style="background:#1a1a2e;color:#eee;padding:40px;text-align:center;font-family:sans-serif;">
+                <h1>Sacred Pixel Dungeon</h1>
+                <p>A roguelike dungeon crawler</p>
+                <p>Fight monsters, collect items, and escape with the Amulet of Yendor in procedurally generated dungeons.</p>
+                <p style="margin-top:20px;color:#ffd700;">Please enable JavaScript to play this game.</p>
+            </div>
+        </noscript>
+        <div id="rating-splash">
+            <img src="GRAC_Game_Grade_Text.png" alt="Game Rating Information">
+        </div>
+        <canvas id="canvas"></canvas>
+
+        <script>
+        // --- Hash fragment handling for import URLs ---
+        // gdx-teavm's asset loader can break when hash fragments are present in the URL.
+        // We save the hash to sessionStorage, remove it from URL, then restore after game loads.
+        (function() {
+            var hash = window.location.hash;
+            if (hash && hash.length > 1) {
+                // Save hash for later retrieval by game code
+                sessionStorage.setItem('_spdImportHash', hash);
+                console.log('Saved import hash to sessionStorage:', hash);
+                // Remove hash from URL without triggering reload
+                if (history.replaceState) {
+                    history.replaceState(null, '', window.location.pathname + window.location.search);
+                }
+            }
+        })();
+
+        // Handle hash change while game is running (user pastes import URL in address bar)
+        window.addEventListener('hashchange', function() {
+            var hash = window.location.hash;
+            if (hash && hash.length > 10) {
+                console.log('Hash changed, saving and reloading for import:', hash);
+                sessionStorage.setItem('_spdImportHash', hash);
+                window.location.reload();
+            }
+        });
+
+        // Prevent browser zoom (Ctrl+scroll, pinch) — game has its own zoom system
+        document.addEventListener('wheel', function(e) {
+            if (e.ctrlKey) { e.preventDefault(); }
+        }, { passive: false });
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+        document.addEventListener('gesturechange', function(e) { e.preventDefault(); });
+        document.addEventListener('gestureend', function(e) { e.preventDefault(); });
+        // Prevent double-tap zoom on mobile
+        var lastTouchEnd = 0;
+        document.addEventListener('touchend', function(e) {
+            var now = Date.now();
+            if (now - lastTouchEnd <= 300) { e.preventDefault(); }
+            lastTouchEnd = now;
+        }, false);
+
+        // Global error handler
+        window.onerror = function(msg, url, line, col, error) {
+            // Suppress harmless audio errors from howler.js
+            // (e.g. "Cannot set properties of undefined (setting 'bufferSource')")
+            // These occur when AudioContext isn't ready yet and don't affect gameplay.
+            var msgStr = String(msg).toLowerCase();
+            if (msgStr.indexOf('buffersource') !== -1
+                || msgStr.indexOf('audiocontext') !== -1
+                || msgStr.indexOf('decodeaudiodata') !== -1) {
+                console.warn('Suppressed audio error:', msg);
+                return true; // suppress
+            }
+            // Log to console only - don't add to DOM (prevents Google indexing error messages)
+            console.error('Error:', msg, url, line, col, error);
+            return false;
+        };
+
+        window.addEventListener('unhandledrejection', function(event) {
+            console.error('Unhandled rejection:', event.reason);
+        });
+
+        // WebGL context handling
+        var canvas = document.getElementById('canvas');
+        if (canvas) {
+            canvas.addEventListener('webglcontextlost', function(e) {
+                e.preventDefault();
+                console.warn('WebGL context lost');
+                // Signal to Java side that context was actually lost
+                window._spdContextLost = true;
+            });
+            canvas.addEventListener('webglcontextrestored', function() {
+                console.log('WebGL context restored');
+                // Don't reload page; the Java Game.resume() will handle GPU state reload
+                // via the webglContextLost flag
+            });
+        }
+
+        // --- Audio unlock for browser autoplay policy ---
+        // Browsers (especially mobile) require a user gesture before playing audio.
+        // We expose window._spdAudioUnlocked so the Java side can query unlock state.
+        window._spdAudioUnlocked = false;
+        function unlockAudio() {
+            if (window._spdAudioUnlocked) return;
+            window._spdAudioUnlocked = true;
+
+            // Resume Howler's AudioContext
+            if (typeof Howler !== 'undefined') {
+                if (Howler.ctx && Howler.ctx.state === 'suspended') {
+                    Howler.ctx.resume().then(function() {
+                        console.log('Howler AudioContext resumed');
+                    }).catch(function(e) {
+                        console.warn('AudioContext resume failed:', e);
+                    });
+                }
+                // Trigger Howler's internal audio unlock
+                if (typeof Howler._autoResume === 'function') {
+                    Howler._autoResume();
+                }
+                // Play a silent buffer to fully unlock (iOS requirement)
+                if (Howler.ctx) {
+                    try {
+                        var buf = Howler.ctx.createBuffer(1, 1, 22050);
+                        var src = Howler.ctx.createBufferSource();
+                        src.buffer = buf;
+                        src.connect(Howler.ctx.destination);
+                        src.start(0);
+                    } catch(e) {}
+                }
+            }
+
+            // Remove all unlock listeners
+            var events = ['click', 'touchstart', 'touchend', 'pointerdown', 'pointerup', 'keydown'];
+            events.forEach(function(evt) {
+                document.removeEventListener(evt, unlockAudio, true);
+            });
+            console.log('Audio unlocked by user gesture');
+
+            // Trigger music restart if it was pending.
+            // Use a short delay to let the AudioContext fully resume,
+            // then tell the Java side to re-start the current music tracks.
+            if (typeof window._spdTriggerMusicAfterUnlock === 'function') {
+                setTimeout(function() {
+                    window._spdTriggerMusicAfterUnlock();
+                }, 100);
+            }
+        }
+        // Add unlock listeners for all possible user gestures (mobile compatibility)
+        ['click', 'touchstart', 'touchend', 'pointerdown', 'pointerup', 'keydown'].forEach(function(evt) {
+            document.addEventListener(evt, unlockAudio, true);
+        });
+
+        // Preload fonts (non-blocking, language-based)
+        // Always load Inter and NotoSans Latin (small, essential)
+        var fontsToLoad = [
+            ['Inter', "url('fonts/inter-full.woff2')"],
+            ['NotoSans', "url('fonts/noto-sans-v42-latin-regular.woff2')"]
+        ];
+        // Add CJK fonts based on browser language (reduces initial download by ~28MB for non-CJK users)
+        var lang = navigator.language || navigator.userLanguage || 'en';
+        var langCode = lang.substring(0, 2).toLowerCase();
+        if (langCode === 'ko') {
+            fontsToLoad.push(['NotoSansKR', "url('fonts/noto-sans-kr.woff2')"]);
+        } else if (langCode === 'ja') {
+            fontsToLoad.push(['NotoSansJP', "url('fonts/noto-sans-jp.woff2')"]);
+        } else if (langCode === 'zh') {
+            // Distinguish Traditional (TW, HK, MO) vs Simplified Chinese
+            if (lang.indexOf('TW') !== -1 || lang.indexOf('HK') !== -1 || lang.indexOf('MO') !== -1 ||
+                lang.indexOf('Hant') !== -1) {
+                fontsToLoad.push(['NotoSansTC', "url('fonts/noto-sans-tc.woff2')"]);
+            } else {
+                fontsToLoad.push(['NotoSansSC', "url('fonts/noto-sans-sc.woff2')"]);
+            }
+        }
+        // Expose function to load additional CJK fonts on-demand (called when user changes language in settings)
+        window._spdLoadFont = function(fontName, fontUrl) {
+            try {
+                var font = new FontFace(fontName, "url('" + fontUrl + "')");
+                return font.load().then(function(loaded) {
+                    document.fonts.add(loaded);
+                    console.log(fontName + ' font loaded on-demand');
+                    return true;
+                });
+            } catch(e) {
+                console.warn(fontName + ' font load failed:', e);
+                return Promise.resolve(false);
+            }
+        };
+        fontsToLoad.forEach(function(f) {
+            try {
+                var font = new FontFace(f[0], f[1]);
+                font.load().then(function(loaded) {
+                    document.fonts.add(loaded);
+                    console.log(f[0] + ' font loaded');
+                }).catch(function(err) {
+                    console.warn(f[0] + ' font load failed:', err);
+                });
+            } catch(e) { /* ignore */ }
+        });
+
+        // --- Auto-save system for HTML5 ---
+        // Marks save data as dirty so the next periodic flush will write it.
+        // The actual save is done by the Java side via Game.pause() -> GameScene.onPause() -> Dungeon.saveAll().
+        // We trigger this from JavaScript lifecycle events to ensure saves persist
+        // when the tab is hidden, navigated away, or closed.
+        var _spdSavePending = false;
+        var _spdLastSaveTime = 0;
+        var _SPD_SAVE_INTERVAL = 10000; // auto-save every 10 seconds
+
+        // Trigger a save by dispatching a custom event that the Java side listens to,
+        // or by directly calling the LibGDX pause lifecycle.
+        function spdTriggerSave() {
+            var now = Date.now();
+            // Throttle: don't save more than once per 3 seconds
+            if (now - _spdLastSaveTime < 3000) return;
+            _spdLastSaveTime = now;
+            try {
+                // gdx-teavm exposes the app listener; trigger pause+resume to flush saves
+                if (typeof window._spdPauseForSave === 'function') {
+                    console.log('SPD: triggering save...');
+                    window._spdPauseForSave();
+                }
+            } catch(e) {
+                console.error('SPD save error:', e);
+            }
+        }
+
+        // Rating splash screen - show for 3 seconds then fade out
+        (function() {
+            var splash = document.getElementById('rating-splash');
+            if (splash) {
+                // After 3 seconds, start fade out
+                setTimeout(function() {
+                    splash.classList.add('fade-out');
+                    // After fade animation completes, hide completely
+                    setTimeout(function() {
+                        splash.style.display = 'none';
+                        console.log('Rating splash hidden');
+                    }, 500); // 0.5s fade duration
+                }, 3000); // 3 second display
+            }
+        })();
+
+        // Resume AudioContext when tab becomes visible again
+        // (some browsers re-suspend AudioContext when tab is hidden)
+        function resumeAudioContext() {
+            if (typeof Howler !== 'undefined' && Howler.ctx && Howler.ctx.state === 'suspended') {
+                Howler.ctx.resume().then(function() {
+                    console.log('AudioContext re-resumed on visibility change');
+                });
+            }
+        }
+
+        // Save when tab becomes hidden (mobile app switch, tab change)
+        // Also pause/resume background music when tab visibility changes
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') {
+                spdTriggerSave();
+                // Pause background music when tab is hidden
+                if (typeof window._spdPauseMusic === 'function') {
+                    window._spdPauseMusic();
+                }
+            } else if (document.visibilityState === 'visible') {
+                resumeAudioContext();
+                // Resume background music when tab becomes visible
+                if (typeof window._spdResumeMusic === 'function') {
+                    window._spdResumeMusic();
+                }
+                // Check if WebGL context is still valid after returning to tab.
+                // Some browsers (especially mobile) may lose the context without
+                // firing webglcontextlost, or the context may be in a bad state.
+                // If gl.isContextLost() returns true, signal to Java for recovery.
+                try {
+                    var gameCanvas = document.getElementById('canvas');
+                    if (gameCanvas) {
+                        var gl = gameCanvas.getContext('webgl2') || gameCanvas.getContext('webgl');
+                        if (gl && gl.isContextLost()) {
+                            console.warn('WebGL context lost detected on visibility restore');
+                            window._spdContextLost = true;
+                        }
+                    }
+                } catch(e) {
+                    console.warn('GL context check error:', e);
+                }
+            }
+        });
+
+        // Save before page unload (close tab, navigate away)
+        window.addEventListener('beforeunload', function() {
+            spdTriggerSave();
+        });
+
+        // Save on pagehide (bfcache-friendly, covers mobile browser close)
+        window.addEventListener('pagehide', function() {
+            spdTriggerSave();
+        });
+
+        // Handle page restoration from bfcache (browser back/forward navigation)
+        // When page is restored from bfcache, WebGL context may be invalid
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                console.log('Page restored from bfcache, reloading...');
+                // Page was restored from bfcache - reload to reinitialize WebGL
+                window.location.reload();
+            }
+        });
+
+        // Periodic auto-save during gameplay
+        setInterval(function() {
+            if (document.visibilityState !== 'hidden') {
+                spdTriggerSave();
+            }
+        }, _SPD_SAVE_INTERVAL);
+        </script>
+
+        <!-- pako.js for DEFLATE compression (data sync feature) -->
+        <script type="text/javascript" src="scripts/pako.min.js"></script>
+
+        <!-- Pre-load howler.js BEFORE app.js so that the Howl constructor is
+             available when the game first tries to play music during
+             TitleScene.create(). gdx-teavm also loads it dynamically, but
+             double-loading is harmless and this eliminates the race condition. -->
+        <script type="text/javascript" src="scripts/howler.js"></script>
+
+        <!-- TeaVM compiled game -->
+        <script type="text/javascript" charset="utf-8" src="app.js"></script>
+        <script>
+        // After app.js loads, wait for fonts then start the game
+        async function start() {
+            // Wait for all @font-face / FontFace API fonts to finish loading
+            // so that Canvas 2D can use them immediately when rendering glyphs.
+            // Without this, CJK characters render as blank (cached before font loads).
+            try {
+                await document.fonts.ready;
+                console.log('All fonts ready, starting game');
+            } catch(e) {
+                console.warn('Font loading error, starting anyway:', e);
+            }
+            main();
+        }
+        window.addEventListener("load", start);
+        </script>
+    </body>
+</html>

@@ -1,0 +1,33 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+allprojects {
+
+    ext {
+        appName = 'Sacred Pixel Dungeon'
+        appPackageName = 'com.sacredpixel.dungeon'
+
+        appVersionCode = 911
+        // appVersionName must be in x.x.x format for RankingsScene version display
+        appVersionName = '4.1.1'
+
+        appJavaCompatibility = JavaVersion.VERSION_11
+
+        gdxVersion = '1.14.0'
+        gdxControllersVersion = '2.2.4'
+    }
+    version = appVersionName
+
+    repositories {
+        mavenCentral()
+        maven { url 'https://central.sonatype.com/repository/maven-snapshots/' }
+        maven { url 'https://jitpack.io' }
+        maven {
+            url 'https://teavm.org/maven/repository/'
+        }
+    }
+
+}

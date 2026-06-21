@@ -1,0 +1,22 @@
+{
+  "name": "sacred-pixel-dungeon-android",
+  "version": "3.3.8",
+  "description": "Sacred Pixel Dungeon - Android Capacitor Wrapper",
+  "main": "index.js",
+  "scripts": {
+    "sync": "npx cap sync android",
+    "open": "npx cap open android",
+    "build:debug": "cd android && ./gradlew assembleDebug",
+    "build:release": "cd android && ./gradlew assembleRelease",
+    "bundle:release": "cd android && ./gradlew bundleRelease"
+  },
+  "keywords": ["game", "pixel-dungeon", "roguelike"],
+  "author": "Sacred Pixel Dungeon Team",
+  "license": "GPL-3.0",
+  "type": "commonjs",
+  "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4"
+  }
+}

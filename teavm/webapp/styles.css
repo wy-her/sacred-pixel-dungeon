@@ -1,0 +1,133 @@
+@font-face {
+    font-family: 'Inter';
+    src: url('fonts/inter-full.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'NotoSans';
+    src: url('fonts/noto-sans-v42-latin-regular.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'NotoSansKR';
+    src: url('fonts/noto-sans-kr.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'NotoSansJP';
+    src: url('fonts/noto-sans-jp.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'NotoSansTC';
+    src: url('fonts/noto-sans-tc.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'NotoSansSC';
+    src: url('fonts/noto-sans-sc.woff2') format('woff2');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    background-color: #000;
+}
+
+#embed-html {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+}
+
+#embed-html table,
+#embed-html td {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+canvas {
+    display: block;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    cursor: default;
+    z-index: 10;
+}
+
+#loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ccc;
+    font-family: monospace;
+    font-size: 16px;
+    text-align: center;
+}
+
+/* Hide loading message once the game canvas appears */
+canvas ~ #loading,
+#embed-html:not(:empty) ~ #loading {
+    display: none;
+}
+
+
+/* ============================
+   Game Rating Splash Screen
+   ============================ */
+
+#rating-splash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
+}
+
+#rating-splash.fade-out {
+    opacity: 0;
+}
+
+#rating-splash img {
+    max-width: 90vw;
+    max-height: 70vh;
+    width: auto;
+    height: auto;
+}

@@ -1,0 +1,60 @@
+# Java class files
+*.class
+
+# Gradle build files
+.gradle/
+build/
+*/build/
+*/bin/
+release/
+
+# Local configuration
+local.properties
+
+# IDE project files
+*.iml
+.idea/
+.vscode/
+
+# OS files
+desktop.ini
+.DS_Store
+Thumbs.db
+
+# Build outputs
+*.apk
+*.dex
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Signing keys (NEVER commit to public repo)
+*.keystore
+*.jks
+
+# Internal development files
+WY/
+wy/
+CLAUDE.md
+translation_checker.py
+
+# Node modules (npm dependencies)
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Google services config
+google-services.json
+
+# Appsintoss build outputs
+*.ait
+.granite/
+*/dist/
+**/dist/
+
+# Debug/temp files
+*.log
+*.tmp
+crash-reports/
