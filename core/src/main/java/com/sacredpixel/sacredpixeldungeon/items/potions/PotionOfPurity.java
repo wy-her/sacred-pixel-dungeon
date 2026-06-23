@@ -35,8 +35,6 @@ import com.sacredpixel.sacredpixeldungeon.effects.Speck;
 import com.sacredpixel.sacredpixeldungeon.effects.SpellSprite;
 import com.sacredpixel.sacredpixeldungeon.messages.Messages;
 import com.sacredpixel.sacredpixeldungeon.sprites.ItemSpriteSheet;
-import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialManager;
-import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialState;
 import com.watabou.utils.BArray;
 import com.sacredpixel.sacredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
@@ -90,13 +88,6 @@ public class PotionOfPurity extends Potion {
 
 			identify();
 			GLog.i(Messages.get(this, "freshness"));
-		}
-
-		// Trigger tutorial progression when potion is thrown/shattered
-		if (TutorialManager.isTutorialLevel()
-				&& (TutorialManager.getState() == TutorialState.POTION_HINT
-				|| TutorialManager.getState() == TutorialState.POTION_USE)) {
-			TutorialManager.onAction(TutorialManager.TutorialAction.POTION_USED);
 		}
 	}
 	

@@ -32,6 +32,8 @@ import com.sacredpixel.sacredpixeldungeon.actors.buffs.Terror;
 import com.sacredpixel.sacredpixeldungeon.actors.mobs.Mob;
 import com.sacredpixel.sacredpixeldungeon.effects.Flare;
 import com.sacredpixel.sacredpixeldungeon.messages.Messages;
+import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialManager;
+import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialState;
 import com.sacredpixel.sacredpixeldungeon.sprites.ItemSpriteSheet;
 import com.sacredpixel.sacredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
@@ -73,6 +75,12 @@ public class ScrollOfTerror extends Scroll {
 			GLog.i( Messages.get(this, "many") );
 		}
 		identify();
+
+		// Tutorial: trigger scroll used action
+		if (TutorialManager.isTutorialLevel()
+				&& TutorialManager.getState() == TutorialState.SCROLL_HINT) {
+			TutorialManager.onAction(TutorialManager.TutorialAction.SCROLL_USED);
+		}
 
 		readAnimation();
 	}

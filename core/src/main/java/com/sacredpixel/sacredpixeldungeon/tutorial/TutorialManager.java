@@ -25,6 +25,11 @@
 package com.sacredpixel.sacredpixeldungeon.tutorial;
 
 import com.sacredpixel.sacredpixeldungeon.Dungeon;
+import com.sacredpixel.sacredpixeldungeon.items.Heap;
+import com.sacredpixel.sacredpixeldungeon.messages.Messages;
+import com.sacredpixel.sacredpixeldungeon.items.Item;
+import com.sacredpixel.sacredpixeldungeon.items.potions.PotionOfFrost;
+import com.sacredpixel.sacredpixeldungeon.items.potions.PotionOfLiquidFlame;
 import com.sacredpixel.sacredpixeldungeon.journal.Bestiary;
 import com.sacredpixel.sacredpixeldungeon.journal.Catalog;
 import com.sacredpixel.sacredpixeldungeon.journal.Document;
@@ -34,6 +39,7 @@ import com.sacredpixel.sacredpixeldungeon.scenes.GameScene;
 import com.sacredpixel.sacredpixeldungeon.ui.AttackIndicator;
 import com.sacredpixel.sacredpixeldungeon.ui.StatusPane;
 import com.sacredpixel.sacredpixeldungeon.ui.Toolbar;
+import com.sacredpixel.sacredpixeldungeon.utils.GLog;
 import com.sacredpixel.sacredpixeldungeon.windows.WndStory;
 import com.sacredpixel.sacredpixeldungeon.windows.WndTutorial;
 import com.watabou.utils.Bundle;
@@ -47,6 +53,13 @@ public class TutorialManager {
 
 	// Pending action to execute after hero moves
 	private static Runnable pendingAction = null;
+
+	// Move counter for delayed actions
+	private static int moveCounter = 0;
+	private static final int MOVES_REQUIRED = 5;  // Number of moves required before next step
+	private static final int RESPAWN_DELAY_MOVES = 5;  // Delay before potion respawn
+	private static final int SCROLL_HINT_DELAY = 1;   // Delay for scroll hint after fire cleared
+	private static int respawnCounter = 0;  // Counter for respawn delay
 
 	// Position constants for snake spawn trigger
 	private static final int CORRIDOR_POS = 3 * 16 + 12; // (12, 3) - corridor beyond door, hero waits here
@@ -67,6 +80,8 @@ public class TutorialManager {
 	public static void reset() {
 		state = TutorialState.NOT_STARTED;
 		pendingAction = null;
+		moveCounter = 0;
+		respawnCounter = 0;
 		// Reset all flashing flags
 		stopFlashHeroInfo();
 		stopFlashExamine();
@@ -179,16 +194,59 @@ public class TutorialManager {
 	}
 
 	/**
-	 * Called when the hero moves. Executes any pending tutorial action.
+	 * Called when the hero moves. Executes any pending tutorial action after required moves.
 	 */
 	public static void onHeroMove() {
 		if (!isTutorialLevel()) return;
 
-		// Execute pending action
+		// Increment move counter and execute pending action after enough moves
 		if (pendingAction != null) {
-			Runnable action = pendingAction;
-			pendingAction = null;
-			action.run();
+			moveCounter++;
+			if (moveCounter >= MOVES_REQUIRED) {
+				Runnable action = pendingAction;
+				pendingAction = null;
+				moveCounter = 0;
+				action.run();
+			}
+		}
+
+		// State-based continuous checks for potion respawn
+		if (state == TutorialState.LIQUID_FLAME_HINT) {
+			TutorialLevel level = (TutorialLevel) Dungeon.level;
+			if (level.isBarricadeDestroyed()) {
+				// Success: proceed to frost potion
+				setState(TutorialState.FROST_HINT);
+				respawnCounter = 0;
+				level.spawnFrostPotion();
+				GameScene.show(WndTutorial.createFrostHint());
+			} else {
+				// Check respawn
+				respawnCounter++;
+				if (respawnCounter >= RESPAWN_DELAY_MOVES) {
+					respawnLiquidFlameIfNeeded();
+					respawnCounter = 0;
+				}
+			}
+		}
+
+		if (state == TutorialState.FROST_HINT) {
+			TutorialLevel level = (TutorialLevel) Dungeon.level;
+			if (level.isEternalFireCleared()) {
+				// Success: proceed to scroll hint after 1 move
+				setState(TutorialState.SCROLL_HINT);
+				respawnCounter = 0;
+				moveCounter = MOVES_REQUIRED - SCROLL_HINT_DELAY;  // Only need 1 more move
+				pendingAction = () -> {
+					GameScene.show(WndTutorial.createScrollHint());
+				};
+			} else {
+				// Check respawn
+				respawnCounter++;
+				if (respawnCounter >= RESPAWN_DELAY_MOVES) {
+					respawnFrostIfNeeded();
+					respawnCounter = 0;
+				}
+			}
 		}
 
 		// Check if hero entered the corridor position (for snake spawn)
@@ -231,8 +289,9 @@ public class TutorialManager {
 			case JOURNAL_CLOSED:
 				if (state == TutorialState.JOURNAL_HINT) {
 					stopFlashJournal();
-					// Wait for hero to move before showing next hint
+					// Wait for hero to move 5 times before showing next hint
 					setState(TutorialState.HERO_INFO_HINT);
+					moveCounter = 0;
 					pendingAction = () -> {
 						GameScene.show(WndTutorial.createHeroInfoHint());
 						flashHeroInfo();
@@ -243,8 +302,9 @@ public class TutorialManager {
 			case HERO_INFO_CLOSED:
 				if (state == TutorialState.HERO_INFO_HINT) {
 					stopFlashHeroInfo();
-					// Wait for hero to move before showing examine guide WndStory
+					// Wait for hero to move 5 times before showing examine guide WndStory
 					setState(TutorialState.EXAMINE_GUIDE_SHOWN);
+					moveCounter = 0;
 					pendingAction = () -> {
 						showGuideStory(Document.GUIDE_EXAMINING, () -> {
 							// After examine guide is closed, show examine hint immediately
@@ -258,8 +318,9 @@ public class TutorialManager {
 
 			case TILE_INFO_CLOSED:
 				if (state == TutorialState.EXAMINE_HINT) {
-					// Wait for hero to move before spawning rat and showing combat hint
+					// Wait for hero to move 5 times before spawning rat and showing combat hint
 					setState(TutorialState.RAT_COMBAT);
+					moveCounter = 0;
 					pendingAction = () -> {
 						((TutorialLevel) Dungeon.level).spawnTutorialRat();
 						GameScene.show(WndTutorial.createCombatHint());
@@ -270,34 +331,43 @@ public class TutorialManager {
 
 			case RAT_KILLED:
 				if (state == TutorialState.RAT_COMBAT) {
-					// Wait for hero to move before showing identification guide and spawning scroll
-					setState(TutorialState.SCROLL_HINT);
+					stopFlashAttack();
+					// Wait for hero to move 5 times before showing identification guide and spawning liquid flame potion
+					setState(TutorialState.LIQUID_FLAME_HINT);
+					moveCounter = 0;
 					pendingAction = () -> {
-						((TutorialLevel) Dungeon.level).spawnTutorialScroll();
-						// Show identification guide WndStory first
+						// Spawn liquid flame potion first
+						((TutorialLevel) Dungeon.level).spawnLiquidFlamePotion();
+						// Show identification guide WndStory
 						showGuideStory(Document.GUIDE_IDING, () -> {
-							// After guide is closed, show scroll hint
-							GameScene.show(WndTutorial.createScrollHint());
+							// After guide is closed, show liquid flame hint
+							GameScene.show(WndTutorial.createLiquidFlameHint());
 						});
 					};
 				}
 				break;
 
-			case SCROLL_USED:
-				if (state == TutorialState.SCROLL_HINT || state == TutorialState.SCROLL_USE) {
-					// Wait for hero to move before spawning potion and showing hint
-					setState(TutorialState.POTION_HINT);
-					pendingAction = () -> {
-						((TutorialLevel) Dungeon.level).spawnTutorialPotion();
-						GameScene.show(WndTutorial.createPotionHint());
-					};
+			case FIRE_POTION_USED:
+				// Potion used - respawn counter is checked in onHeroMove()
+				// Reset respawn counter when potion is used
+				if (state == TutorialState.LIQUID_FLAME_HINT) {
+					respawnCounter = 0;
 				}
 				break;
 
-			case POTION_USED:
-				if (state == TutorialState.POTION_HINT || state == TutorialState.POTION_USE) {
-					// Wait for hero to move before spawning search page
+			case FROST_POTION_USED:
+				// Potion used - respawn counter is checked in onHeroMove()
+				// Reset respawn counter when potion is used
+				if (state == TutorialState.FROST_HINT) {
+					respawnCounter = 0;
+				}
+				break;
+
+			case SCROLL_USED:
+				if (state == TutorialState.SCROLL_HINT) {
+					// Wait for hero to move 5 times before spawning search page
 					setState(TutorialState.SEARCH_PAGE_SPAWNED);
+					moveCounter = 0;
 					pendingAction = () -> {
 						((TutorialLevel) Dungeon.level).spawnSearchPage();
 						// Search page will trigger SEARCH_PAGE_PICKED_UP when picked up
@@ -431,6 +501,56 @@ public class TutorialManager {
 		Toolbar.waitFlashing = false;
 	}
 
+	// Respawn helper methods
+
+	/**
+	 * Respawns liquid flame potion if barricade still exists and no potion available.
+	 */
+	private static void respawnLiquidFlameIfNeeded() {
+		TutorialLevel level = (TutorialLevel) Dungeon.level;
+
+		// Already destroyed - shouldn't happen but check anyway
+		if (level.isBarricadeDestroyed()) return;
+
+		// Check inventory
+		if (Dungeon.hero.belongings.getItem(PotionOfLiquidFlame.class) != null) return;
+
+		// Check map heaps
+		for (Heap heap : Dungeon.level.heaps.valueList()) {
+			for (Item item : heap.items) {
+				if (item instanceof PotionOfLiquidFlame) return;
+			}
+		}
+
+		// Respawn
+		level.spawnLiquidFlamePotion();
+		GLog.w(Messages.get(TutorialManager.class, "potion_respawn"));
+	}
+
+	/**
+	 * Respawns frost potion if eternal fire still exists and no potion available.
+	 */
+	private static void respawnFrostIfNeeded() {
+		TutorialLevel level = (TutorialLevel) Dungeon.level;
+
+		// Already cleared - shouldn't happen but check anyway
+		if (level.isEternalFireCleared()) return;
+
+		// Check inventory
+		if (Dungeon.hero.belongings.getItem(PotionOfFrost.class) != null) return;
+
+		// Check map heaps
+		for (Heap heap : Dungeon.level.heaps.valueList()) {
+			for (Item item : heap.items) {
+				if (item instanceof PotionOfFrost) return;
+			}
+		}
+
+		// Respawn
+		level.spawnFrostPotion();
+		GLog.w(Messages.get(TutorialManager.class, "potion_respawn"));
+	}
+
 	/**
 	 * Tutorial action types.
 	 */
@@ -441,8 +561,9 @@ public class TutorialManager {
 		HERO_INFO_CLOSED,
 		TILE_INFO_CLOSED,
 		RAT_KILLED,
+		FIRE_POTION_USED,
+		FROST_POTION_USED,
 		SCROLL_USED,
-		POTION_USED,
 		SEARCH_PAGE_PICKED_UP,
 		SEARCH_GUIDE_CLOSED,
 		HIDDEN_DOOR_FOUND,

@@ -36,10 +36,9 @@ public enum TutorialState {
 	EXAMINE_GUIDE_SHOWN,  // Examine guide WndStory shown
 	EXAMINE_HINT,         // Examine button flashing + hint
 	RAT_COMBAT,           // Rat (HP=1) spawned + combat hint
-	SCROLL_HINT,          // Scroll spawned + pickup hint
-	SCROLL_USE,           // Waiting for scroll use
-	POTION_HINT,          // Potion spawned + pickup hint
-	POTION_USE,           // Waiting for potion use
+	LIQUID_FLAME_HINT,    // Liquid flame potion spawned, waiting to burn barricade
+	FROST_HINT,           // Frost potion spawned, waiting to extinguish fire
+	SCROLL_HINT,          // Scroll available, waiting for use
 	SEARCH_PAGE_SPAWNED,  // Search page spawned, waiting for pickup
 	SEARCH_GUIDE_SHOWN,   // Search guide WndStory shown
 	SEARCH_HINT,          // Search hint shown

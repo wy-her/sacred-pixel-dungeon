@@ -51,8 +51,6 @@ import com.sacredpixel.sacredpixeldungeon.items.potions.exotic.PotionOfStormClou
 import com.sacredpixel.sacredpixeldungeon.journal.Catalog;
 import com.sacredpixel.sacredpixeldungeon.levels.Terrain;
 import com.sacredpixel.sacredpixeldungeon.messages.Messages;
-import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialManager;
-import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialState;
 import com.sacredpixel.sacredpixeldungeon.plants.Blindweed;
 import com.sacredpixel.sacredpixeldungeon.plants.Earthroot;
 import com.sacredpixel.sacredpixeldungeon.plants.Fadeleaf;
@@ -307,13 +305,6 @@ public class Potion extends Item {
 				Talent.onPotionUsed(curUser, curUser.pos, talentFactor);
 			}
 		}
-
-		// Trigger tutorial progression when potion is used
-		if (TutorialManager.isTutorialLevel()
-				&& (TutorialManager.getState() == TutorialState.POTION_HINT
-				|| TutorialManager.getState() == TutorialState.POTION_USE)) {
-			TutorialManager.onAction(TutorialManager.TutorialAction.POTION_USED);
-		}
 	}
 	
 	@Override
@@ -349,13 +340,6 @@ public class Potion extends Item {
 		if (Dungeon.level.heroFOV[cell]) {
 			GLog.i( Messages.get(Potion.class, "shatter") );
 			Sample.INSTANCE.play( Assets.Sounds.SHATTER );
-		}
-
-		// Trigger tutorial progression when potion is thrown/shattered
-		if (TutorialManager.isTutorialLevel()
-				&& (TutorialManager.getState() == TutorialState.POTION_HINT
-				|| TutorialManager.getState() == TutorialState.POTION_USE)) {
-			TutorialManager.onAction(TutorialManager.TutorialAction.POTION_USED);
 		}
 	}
 

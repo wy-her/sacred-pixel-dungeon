@@ -30,6 +30,8 @@ import com.sacredpixel.sacredpixeldungeon.actors.blobs.Blob;
 import com.sacredpixel.sacredpixeldungeon.actors.blobs.Freezing;
 import com.sacredpixel.sacredpixeldungeon.scenes.GameScene;
 import com.sacredpixel.sacredpixeldungeon.sprites.ItemSpriteSheet;
+import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialManager;
+import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialState;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.PathFinder;
 
@@ -48,15 +50,20 @@ public class PotionOfFrost extends Potion {
 
 			Sample.INSTANCE.play( Assets.Sounds.SHATTER );
 		}
-		
+
 		for (int offset : PathFinder.NEIGHBOURS9){
 			if (!Dungeon.level.solid[cell+offset]) {
-				
+
 				GameScene.add(Blob.seed(cell + offset, 10, Freezing.class));
-				
+
 			}
 		}
-		
+
+		// Tutorial: trigger frost potion used action
+		if (TutorialManager.isTutorialLevel()
+				&& TutorialManager.getState() == TutorialState.FROST_HINT) {
+			TutorialManager.onAction(TutorialManager.TutorialAction.FROST_POTION_USED);
+		}
 	}
 	
 	@Override

@@ -30,6 +30,8 @@ import com.sacredpixel.sacredpixeldungeon.actors.blobs.Blob;
 import com.sacredpixel.sacredpixeldungeon.actors.blobs.Fire;
 import com.sacredpixel.sacredpixeldungeon.scenes.GameScene;
 import com.sacredpixel.sacredpixeldungeon.sprites.ItemSpriteSheet;
+import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialManager;
+import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialState;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.PathFinder;
 
@@ -56,6 +58,12 @@ public class PotionOfLiquidFlame extends Potion {
 				GameScene.add(Blob.seed(cell + offset, 2, Fire.class));
 
 			}
+		}
+
+		// Tutorial: trigger fire potion used action
+		if (TutorialManager.isTutorialLevel()
+				&& TutorialManager.getState() == TutorialState.LIQUID_FLAME_HINT) {
+			TutorialManager.onAction(TutorialManager.TutorialAction.FIRE_POTION_USED);
 		}
 	}
 	

@@ -54,8 +54,6 @@ import com.sacredpixel.sacredpixeldungeon.items.stones.StoneOfIntuition;
 import com.sacredpixel.sacredpixeldungeon.items.stones.StoneOfShock;
 import com.sacredpixel.sacredpixeldungeon.journal.Catalog;
 import com.sacredpixel.sacredpixeldungeon.messages.Messages;
-import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialManager;
-import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialState;
 import com.sacredpixel.sacredpixeldungeon.scenes.AlchemyScene;
 import com.sacredpixel.sacredpixeldungeon.sprites.HeroSprite;
 import com.sacredpixel.sacredpixeldungeon.sprites.ItemSpriteSheet;
@@ -191,12 +189,6 @@ public abstract class Scroll extends Item {
 				GLog.n( Messages.get(this, "cursed") );
 			} else {
 				doRead();
-				// Trigger tutorial progression when scroll is used
-				if (TutorialManager.isTutorialLevel()
-						&& (TutorialManager.getState() == TutorialState.SCROLL_HINT
-						|| TutorialManager.getState() == TutorialState.SCROLL_USE)) {
-					TutorialManager.onAction(TutorialManager.TutorialAction.SCROLL_USED);
-				}
 			}
 
 		}

@@ -194,25 +194,36 @@ public class WndTutorial extends Window {
 		);
 	}
 
-	// Step 12a: Scroll hint - Scroll icon
-	public static WndTutorial createScrollHint() {
-		String msg = Messages.get(WndTutorial.class, "scroll_msg");
-		GLog.p(msg.replace("\n\n", "\n"));
+	// Step 12a: Liquid Flame potion hint - burn the barricade
+	public static WndTutorial createLiquidFlameHint() {
+		String msg = Messages.get(WndTutorial.class, "liquid_flame_msg");
+		GLog.p(msg.replace("\n\n", " "));
 		TutorialManager.stopFlashAttack();
 		return new WndTutorial(
-				new ItemSprite(ItemSpriteSheet.SCROLL_HOLDER),
-				Messages.get(WndTutorial.class, "scroll_title"),
+				new ItemSprite(ItemSpriteSheet.POTION_HOLDER),
+				Messages.get(WndTutorial.class, "liquid_flame_title"),
 				msg
 		);
 	}
 
-	// Step 12b: Potion hint - Potion icon
-	public static WndTutorial createPotionHint() {
-		String msg = Messages.get(WndTutorial.class, "potion_msg");
-		GLog.p(msg.replace("\n\n", "\n"));
+	// Step 12b: Frost potion hint - extinguish the fire
+	public static WndTutorial createFrostHint() {
+		String msg = Messages.get(WndTutorial.class, "frost_msg");
+		GLog.p(msg.replace("\n\n", " "));
 		return new WndTutorial(
 				new ItemSprite(ItemSpriteSheet.POTION_HOLDER),
-				Messages.get(WndTutorial.class, "potion_title"),
+				Messages.get(WndTutorial.class, "frost_title"),
+				msg
+		);
+	}
+
+	// Step 12c: Scroll hint
+	public static WndTutorial createScrollHint() {
+		String msg = Messages.get(WndTutorial.class, "scroll_msg");
+		GLog.p(msg.replace("\n\n", " "));
+		return new WndTutorial(
+				new ItemSprite(ItemSpriteSheet.SCROLL_HOLDER),
+				Messages.get(WndTutorial.class, "scroll_title"),
 				msg
 		);
 	}
@@ -281,7 +292,7 @@ public class WndTutorial extends Window {
 					if (Promotion.isAvailable()) {
 						Promotion.grantTutorialReward((success, message) -> {
 							if (success) {
-								GLog.p("Tutorial reward granted!");
+								GLog.p(Messages.get(WndTutorial.class, "reward_granted"));
 							}
 						});
 					}
@@ -294,7 +305,7 @@ public class WndTutorial extends Window {
 	// Legacy methods for compatibility (deprecated)
 	@Deprecated
 	public static WndTutorial createItemHint() {
-		return createScrollHint();
+		return createLiquidFlameHint();
 	}
 
 	@Deprecated
@@ -303,8 +314,13 @@ public class WndTutorial extends Window {
 	}
 
 	@Deprecated
+	public static WndTutorial createPotionHint() {
+		return createLiquidFlameHint();
+	}
+
+	@Deprecated
 	public static WndTutorial createScrollUsedHint() {
-		return createPotionHint();
+		return createFrostHint();
 	}
 
 	@Deprecated
