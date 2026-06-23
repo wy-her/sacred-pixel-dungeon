@@ -57,11 +57,9 @@ public class TeaVMPromotion {
         script =
         "try {" +
         "  if (window.parent && typeof window.parent.__grantPromotionReward__ === 'function') {" +
-        "    console.log('TeaVMPromotion: granting reward', promotionCode, amount);" +
         "    window.parent.__grantPromotionReward__(promotionCode, amount);" +
         "    return true;" +
         "  } else {" +
-        "    console.warn('TeaVMPromotion: __grantPromotionReward__ not available');" +
         "    return false;" +
         "  }" +
         "} catch(e) {" +

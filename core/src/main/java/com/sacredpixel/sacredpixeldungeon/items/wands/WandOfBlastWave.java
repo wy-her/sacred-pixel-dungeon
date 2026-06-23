@@ -30,6 +30,7 @@ import com.sacredpixel.sacredpixeldungeon.Dungeon;
 import com.sacredpixel.sacredpixeldungeon.actors.Actor;
 import com.sacredpixel.sacredpixeldungeon.actors.Char;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Buff;
+import com.sacredpixel.sacredpixeldungeon.actors.hero.Hero;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.FlavourBuff;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Paralysis;
 import com.sacredpixel.sacredpixeldungeon.effects.Effects;
@@ -160,13 +161,16 @@ public class WandOfBlastWave extends DamageWand {
 
 		Actor.add(new Pushing(ch, ch.pos, newPos, new Callback() {
 			public void call() {
-				if (initialpos != ch.pos || Actor.findChar(newPos) != null) {
-					//something caused movement or added chars before pushing resolved, cancel to be safe.
+				//Only check if target cell is occupied (removed initialpos check to fix push cancellation bug)
+				if (Actor.findChar(newPos) != null) {
+					//target cell is now occupied, cancel to be safe.
 					ch.sprite.place(ch.pos);
 					return;
 				}
 				int oldPos = ch.pos;
 				ch.pos = newPos;
+				//Always sync sprite with pos to prevent visual desync
+				ch.sprite.place(ch.pos);
 				if (finalCollided && ch.isActive()) {
 					ch.damage(Random.NormalIntRange(finalDist, 2*finalDist), new Knockback());
 					if (ch.isActive()) {
@@ -200,7 +204,8 @@ public class WandOfBlastWave extends DamageWand {
 
 		if (defender.buff(Paralysis.class) != null && defender.buff(BWaveOnHitTracker.class) == null){
 			defender.buff(Paralysis.class).detach();
-			int dmg = Random.NormalIntRange(8+2*buffedLvl(), 12+3*buffedLvl());
+			//use Hero.heroDamageIntRange to apply 13-Leaf Clover luck bonus
+			int dmg = Hero.heroDamageIntRange(8+2*buffedLvl(), 12+3*buffedLvl());
 			defender.damage(Math.round(procChanceMultiplier(attacker) * dmg), this);
 			BlastWave.blast(defender.pos);
 			Sample.INSTANCE.play( Assets.Sounds.BLAST );

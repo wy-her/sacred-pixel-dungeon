@@ -67,7 +67,7 @@ i:b:/messages/actors/actors_fr.properties:292778:1
 i:b:/messages/actors/actors_hu.properties:299017:1
 i:b:/messages/actors/actors_in.properties:281870:1
 i:b:/messages/actors/actors_it.properties:287244:1
-i:b:/messages/actors/actors_ja.properties:300241:1
+i:b:/messages/actors/actors_ja.properties:300243:1
 i:b:/messages/actors/actors_ko.properties:303068:1
 i:b:/messages/actors/actors_nl.properties:286147:1
 i:b:/messages/actors/actors_pl.properties:285053:1
@@ -98,7 +98,7 @@ i:b:/messages/items/items_hu.properties:260781:1
 i:b:/messages/items/items_in.properties:252244:1
 i:b:/messages/items/items_it.properties:258754:1
 i:b:/messages/items/items_ja.properties:275896:1
-i:b:/messages/items/items_ko.properties:280301:1
+i:b:/messages/items/items_ko.properties:280300:1
 i:b:/messages/items/items_nl.properties:258104:1
 i:b:/messages/items/items_pl.properties:257730:1
 i:b:/messages/items/items_pt.properties:256324:1

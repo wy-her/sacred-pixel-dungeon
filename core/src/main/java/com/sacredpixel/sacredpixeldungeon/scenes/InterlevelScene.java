@@ -133,6 +133,9 @@ public class InterlevelScene extends PixelScene {
 
 	private boolean stageClearPending = false;
 	private boolean stageClearWindowCreated = false;
+	// Static depth tracker to prevent WndRegionComplete duplication after resetScene()
+	// (fixes bug where resize during ad causes scene recreation and duplicate window)
+	private static int lastDepthWithStageClear = -1;
 	private ColorBlock stageclearBg;
 	private boolean isNewFloor = false;
 	private float displayTimeElapsed = 0f;
@@ -199,6 +202,8 @@ public class InterlevelScene extends PixelScene {
 					loadingDepth = 1;
 					fadeTime = SLOW_FADE;
 					isNewFloor = true;
+					//Reset static depth tracker for new game
+					lastDepthWithStageClear = -1;
 				} else {
 					if (curTransition != null)  loadingDepth = curTransition.destDepth;
 					else                        loadingDepth = Dungeon.depth+1;
@@ -453,16 +458,22 @@ public class InterlevelScene extends PixelScene {
 		}
 
 		//STAGE_CLEAR phase: create WndRegionComplete (no fade-in)
-		if (phase == Phase.STAGE_CLEAR && !stageClearWindowCreated) {
-			stageClearWindowCreated = true;
-			try {
-				WndRegionComplete wnd = new WndRegionComplete(() -> {
+		//Added !interstitialAdShown and depth check to prevent duplicate window after resetScene()
+		//This fixes bug where resize during ad causes scene recreation and WndRegionComplete appears twice
+		if (phase == Phase.STAGE_CLEAR && !stageClearWindowCreated && !interstitialAdShown) {
+			//Depth check prevents duplicate creation if resetScene() recreates InterlevelScene
+			if (Dungeon.depth != lastDepthWithStageClear) {
+				stageClearWindowCreated = true;
+				lastDepthWithStageClear = Dungeon.depth;
+				try {
+					WndRegionComplete wnd = new WndRegionComplete(() -> {
+						startPostRegionComplete();
+					});
+					add(wnd);
+				} catch (Exception e) {
+					Game.reportException(e);
 					startPostRegionComplete();
-				});
-				add(wnd);
-			} catch (Exception e) {
-				Game.reportException(e);
-				startPostRegionComplete();
+				}
 			}
 		}
 

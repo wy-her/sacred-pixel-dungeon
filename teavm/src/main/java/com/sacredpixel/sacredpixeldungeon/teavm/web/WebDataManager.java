@@ -132,7 +132,8 @@ public class WebDataManager {
         }
     }
 
-    @JSBody(params = {"msg"}, script = "console.log('[WebDataManager] ' + msg);")
+    // Debug logging disabled for production
+    @JSBody(params = {"msg"}, script = "")
     private static native void log(String msg);
 
     /**
@@ -418,7 +419,6 @@ public class WebDataManager {
      * Does not affect other websites' data.
      */
     @JSBody(script =
-            "console.log('[WebDataManager] Clearing Sacred PD data...');" +
             "try {" +
             "    var keysToDelete = [];" +
             "    for (var i = 0; i < localStorage.length; i++) {" +
@@ -426,12 +426,11 @@ public class WebDataManager {
             "        if (key && key.indexOf('spd_') === 0) { keysToDelete.push(key); }" +
             "    }" +
             "    keysToDelete.forEach(function(key) { localStorage.removeItem(key); });" +
-            "    console.log('[WebDataManager] Cleared ' + keysToDelete.length + ' localStorage keys');" +
             "    var dbName = 'spdDB';" +
             "    var deleteRequest = indexedDB.deleteDatabase(dbName);" +
-            "    deleteRequest.onsuccess = function() { console.log('[WebDataManager] IndexedDB deleted'); window.location.reload(); };" +
-            "    deleteRequest.onerror = function() { console.log('[WebDataManager] IndexedDB error'); window.location.reload(); };" +
-            "    deleteRequest.onblocked = function() { console.log('[WebDataManager] IndexedDB blocked'); window.location.reload(); };" +
+            "    deleteRequest.onsuccess = function() { window.location.reload(); };" +
+            "    deleteRequest.onerror = function() { window.location.reload(); };" +
+            "    deleteRequest.onblocked = function() { window.location.reload(); };" +
             "} catch (e) { console.error('[WebDataManager] Clear error:', e); window.location.reload(); }")
     public static native void clearAllData();
 }

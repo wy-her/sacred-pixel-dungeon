@@ -89,10 +89,9 @@ public class Pushing extends Actor {
 
 	@Override
 	protected boolean act() {
-		Actor.remove( Pushing.this );
-
 		if (sprite != null && sprite.parent != null) {
-			//Add VFX blocker now that act() is running (safe on HTML5)
+			//Add VFX blocker FIRST to prevent Mob.act() from running during animation
+			//This fixes the bug where mobs would act before being pushed
 			if (blockingVfx) Actor.addVfxBlocker();
 			if (Dungeon.level.heroFOV[from] || Dungeon.level.heroFOV[to]){
 				sprite.visible = true;
@@ -105,6 +104,9 @@ public class Pushing extends Actor {
 			if (callback != null) callback.call();
 			return true;
 		}
+
+		//Remove AFTER VFX blocker is added to prevent timing gap
+		Actor.remove( Pushing.this );
 
 		//so that all pushing effects at the same time go simultaneously
 		for ( Actor actor : Actor.all() ){

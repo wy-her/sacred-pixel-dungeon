@@ -33,6 +33,7 @@ import com.sacredpixel.sacredpixeldungeon.actors.blobs.Fire;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Buff;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Burning;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Cripple;
+import com.sacredpixel.sacredpixeldungeon.actors.hero.Hero;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Paralysis;
 import com.sacredpixel.sacredpixeldungeon.actors.hero.abilities.mage.WildMagic;
 import com.sacredpixel.sacredpixeldungeon.effects.CellEmitter;
@@ -201,8 +202,8 @@ public class WandOfFireblast extends DamageWand {
 							ch.buff(Burning.class).detach();
 						}
 						if (ch.alignment == Char.Alignment.ENEMY) {
-							//damage of a 2-charge zap
-							ch.damage(Math.round(powerMulti*Random.NormalIntRange(2 + 2*buffedLvl(), 8 + 4*buffedLvl())), this);
+							//damage of a 2-charge zap, use Hero.heroDamageIntRange for 13-Leaf Clover luck bonus
+							ch.damage(Math.round(powerMulti*Hero.heroDamageIntRange(2 + 2*buffedLvl(), 8 + 4*buffedLvl())), this);
 						}
 					}
 				}

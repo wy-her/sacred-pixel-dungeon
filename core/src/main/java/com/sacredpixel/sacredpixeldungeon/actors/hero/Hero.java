@@ -1514,6 +1514,7 @@ public class Hero extends Char {
 				sprite.showStatus(CharSprite.DEFAULT, Messages.get(this, "wait"));
 			}
 		}
+		damageInterrupt = true;
 		resting = fullRest;
 	}
 	

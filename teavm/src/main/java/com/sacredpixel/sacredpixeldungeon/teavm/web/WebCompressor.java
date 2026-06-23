@@ -49,15 +49,12 @@ public class WebCompressor {
     @JSBody(params = {"compressed"}, script =
             "try {" +
             "    var MAX_SIZE = 1 * 1024 * 1024;" + // 1MB limit
-            "    console.log('[WebCompressor] inflate: input length=' + (compressed ? compressed.length : 'null'));" +
             "    if (typeof pako === 'undefined') {" +
             "        console.error('[WebCompressor] pako.js not loaded');" +
             "        return null;" +
             "    }" +
             "    var input = new Uint8Array(compressed);" +
-            "    console.log('[WebCompressor] inflate: first 10 bytes: ' + Array.from(input.slice(0, 10)).join(','));" +
             "    var decompressed = pako.inflateRaw(input);" +
-            "    console.log('[WebCompressor] inflate: decompressed length=' + decompressed.length);" +
             "    if (decompressed.length > MAX_SIZE) {" +
             "        console.error('[WebCompressor] Decompressed data too large: ' + decompressed.length + ' bytes (max: ' + MAX_SIZE + ')');" +
             "        return null;" +

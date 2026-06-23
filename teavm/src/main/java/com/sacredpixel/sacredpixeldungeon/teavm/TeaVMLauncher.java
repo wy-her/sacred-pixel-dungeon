@@ -60,7 +60,7 @@ public class TeaVMLauncher {
             log("TeaVMLauncher: compression disabled");
 
             // Game.version must be in x.x.x format for RankingsScene version display
-            Game.version = "4.1.1";
+            Game.version = "4.1.2";
             Game.versionCode = 911;
             log("TeaVMLauncher: version set");
 
@@ -481,7 +481,8 @@ public class TeaVMLauncher {
     @JSBody(script = "return navigator.language || navigator.userLanguage || 'en';")
     static native String getBrowserLanguage();
 
-    @JSBody(params = {"msg"}, script = "console.log(msg);")
+    // Debug logging disabled for production
+    @JSBody(params = {"msg"}, script = "")
     static native void log(String msg);
 
     @JSBody(params = {"msg"}, script =

@@ -12,7 +12,7 @@ allprojects {
 
         appVersionCode = 911
         // appVersionName must be in x.x.x format for RankingsScene version display
-        appVersionName = '4.1.1'
+        appVersionName = '4.1.2'
 
         appJavaCompatibility = JavaVersion.VERSION_11
 

@@ -59,19 +59,45 @@ public class TeaVMPlatformSupport extends PlatformSupport {
         }
     }
 
+    // Fullscreen API with browser vendor prefix support (webkit, moz, ms)
+    // Also includes Promise compatibility check for older browsers
+    // Note: @JSBody already wraps code in a function, so no IIFE needed
     @JSBody(script =
-        "if (!document.fullscreenElement) {" +
-        "  document.documentElement.requestFullscreen().catch(function(e){" +
-        "    console.warn('Fullscreen request failed:', e);" +
-        "  });" +
+        "var elem = document.documentElement;" +
+        "var fullscreenElem = document.fullscreenElement || " +
+        "                     document.webkitFullscreenElement || " +
+        "                     document.mozFullScreenElement || " +
+        "                     document.msFullscreenElement;" +
+        "if (!fullscreenElem) {" +
+        "  var requestFn = elem.requestFullscreen || " +
+        "                  elem.webkitRequestFullscreen || " +
+        "                  elem.mozRequestFullScreen || " +
+        "                  elem.msRequestFullscreen;" +
+        "  if (requestFn) {" +
+        "    var result = requestFn.call(elem);" +
+        "    if (result && typeof result.catch === 'function') {" +
+        "      result.catch(function(e){ console.warn('Fullscreen request failed:', e); });" +
+        "    }" +
+        "  }" +
         "}")
     private static native void jsRequestFullscreen();
 
     @JSBody(script =
-        "if (document.fullscreenElement) {" +
-        "  document.exitFullscreen().catch(function(e){" +
-        "    console.warn('Exit fullscreen failed:', e);" +
-        "  });" +
+        "var fullscreenElem = document.fullscreenElement || " +
+        "                     document.webkitFullscreenElement || " +
+        "                     document.mozFullScreenElement || " +
+        "                     document.msFullscreenElement;" +
+        "if (fullscreenElem) {" +
+        "  var exitFn = document.exitFullscreen || " +
+        "               document.webkitExitFullscreen || " +
+        "               document.mozCancelFullScreen || " +
+        "               document.msExitFullscreen;" +
+        "  if (exitFn) {" +
+        "    var result = exitFn.call(document);" +
+        "    if (result && typeof result.catch === 'function') {" +
+        "      result.catch(function(e){ console.warn('Exit fullscreen failed:', e); });" +
+        "    }" +
+        "  }" +
         "}")
     private static native void jsExitFullscreen();
 

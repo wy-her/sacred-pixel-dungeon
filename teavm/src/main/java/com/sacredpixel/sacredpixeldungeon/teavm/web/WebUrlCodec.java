@@ -84,7 +84,8 @@ public class WebUrlCodec {
         }
     }
 
-    @JSBody(params = {"msg"}, script = "console.log('[WebUrlCodec] ' + msg);")
+    // Debug logging disabled for production
+    @JSBody(params = {"msg"}, script = "")
     private static native void log(String msg);
 
     /**
@@ -184,7 +185,6 @@ public class WebUrlCodec {
             "if (!hash || hash.length <= 1) {" +
             "    var saved = sessionStorage.getItem('_spdImportHash');" +
             "    if (saved) {" +
-            "        console.log('Retrieved import hash from sessionStorage:', saved);" +
             "        return saved;" +
             "    }" +
             "}" +

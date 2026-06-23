@@ -61,10 +61,7 @@ public class TeaVMInterstitialAd {
     @JSBody(script =
         "try {" +
         "  if (window.parent && typeof window.parent.__preloadInterstitialAd__ === 'function') {" +
-        "    console.log('TeaVMInterstitialAd: preloading ad');" +
         "    window.parent.__preloadInterstitialAd__();" +
-        "  } else {" +
-        "    console.log('TeaVMInterstitialAd: preload not available');" +
         "  }" +
         "} catch(e) {" +
         "  console.warn('TeaVMInterstitialAd preload error', e);" +
@@ -160,7 +157,6 @@ public class TeaVMInterstitialAd {
         "  window.__adCompleteFlag__ = false;" +
         "  var allowedOrigins = [window.location.origin, 'https://sacredpixel.net'];" +
         "  var doComplete = function() {" +
-        "    console.log('TeaVMInterstitialAd: setting complete flag');" +
         "    window.__adCompleteFlag__ = true;" +
         "  };" +
         "  window.__onInterstitialAdComplete__ = doComplete;" +
@@ -174,17 +170,14 @@ public class TeaVMInterstitialAd {
         "      return;" +
         "    }" +
         "    if (e.data && e.data.type === 'adComplete') {" +
-        "      console.log('TeaVMInterstitialAd: received postMessage fallback');" +
         "      doComplete();" +
         "      window.removeEventListener('message', msgHandler);" +
         "    }" +
         "  };" +
         "  window.addEventListener('message', msgHandler);" +
         "  if (window.parent && typeof window.parent.__showInterstitialAd__ === 'function') {" +
-        "    console.log('TeaVMInterstitialAd: calling parent');" +
         "    window.parent.__showInterstitialAd__();" +
         "  } else {" +
-        "    console.warn('TeaVMInterstitialAd: not available, completing immediately');" +
         "    doComplete();" +
         "    window.removeEventListener('message', msgHandler);" +
         "  }" +
