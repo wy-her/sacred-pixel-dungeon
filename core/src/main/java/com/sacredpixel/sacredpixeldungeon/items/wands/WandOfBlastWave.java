@@ -159,7 +159,7 @@ public class WandOfBlastWave extends DamageWand {
 		final boolean finalCollided = collided && collideDmg;
 		final int initialpos = ch.pos;
 
-		Actor.add(new Pushing(ch, ch.pos, newPos, new Callback() {
+		Pushing p = new Pushing(ch, ch.pos, newPos, new Callback() {
 			public void call() {
 				//Only check if target cell is occupied (removed initialpos check to fix push cancellation bug)
 				if (Actor.findChar(newPos) != null) {
@@ -194,7 +194,9 @@ public class WandOfBlastWave extends DamageWand {
 					Dungeon.observe();
 				}
 			}
-		}));
+		});
+		p.setBlockingVfx();
+		Actor.add(p);
 	}
 
 	public static class Knockback{}
