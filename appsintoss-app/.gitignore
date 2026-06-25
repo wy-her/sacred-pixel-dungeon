@@ -1,6 +1,9 @@
 # Build output
 dist/
 
+# Game build output (copied from teavm build, contains compiled code with sensitive config)
+public/game/
+
 # Dependencies
 node_modules/
 

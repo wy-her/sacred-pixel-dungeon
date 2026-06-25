@@ -185,8 +185,9 @@ public class InterlevelScene extends PixelScene {
 		int loadingDepth;
 		fadeTime = NORM_FADE;
 
-		// Tutorial and Test levels: show entrance.jpg with slow fade, no story
-		boolean isTutorialOrTestLevel = tutorialLevel || testLevel;
+		// Test levels: show entrance.jpg with slow fade, no story
+		// Tutorial: show entrance.jpg with slow fade, WITH story
+		boolean isTestLevelOnly = testLevel && !tutorialLevel;
 
 		long seed = Dungeon.seed;
 		switch (mode){
@@ -240,7 +241,7 @@ public class InterlevelScene extends PixelScene {
 		//for portrait users, each run the splashes change what details they focus on
 		Random.pushGenerator(seed+lastRegion);
 			// Tutorial/Test levels and Floor 1 (new game) use ENTRANCE background
-			if (isTutorialOrTestLevel || (Dungeon.hero == null && loadingDepth == 1)) {
+			if (tutorialLevel || isTestLevelOnly || (mode == Mode.DESCEND && loadingDepth == 1)) {
 				loadingAsset = Assets.Splashes.ENTRANCE;
 				loadingCenter = 400; // center focus
 				fadeTime = SLOW_FADE;
@@ -343,8 +344,12 @@ public class InterlevelScene extends PixelScene {
 		align(loadingText);
 		add(loadingText);
 
-		// Tutorial/Test levels skip story completely
-		if (!isTutorialOrTestLevel && mode == Mode.DESCEND && lastRegion <= 5){
+		// Test levels skip story completely; Tutorial has its own story
+		if (tutorialLevel && mode == Mode.DESCEND) {
+			// Tutorial: show "Tutorial" intro story
+			isStoryFloor = true;
+			createStoryElements("Tutorial");
+		} else if (!isTestLevelOnly && mode == Mode.DESCEND && lastRegion <= 5){
 			if (Dungeon.hero == null || (loadingDepth > Statistics.deepestFloor && loadingDepth % 5 == 1)){
 				// Flag this as a story floor; actual story elements will be created
 				// after WndRegionComplete + countdown on story floors (6,11,16,21),
@@ -757,10 +762,19 @@ public class InterlevelScene extends PixelScene {
 	}
 
 	private void createStoryElements(int region) {
+		createStoryElementsInternal(Document.INTROS.pageBody(region), region);
+	}
+
+	private void createStoryElements(String pageName) {
+		int pageIdx = Document.INTROS.pageIdx(pageName);
+		createStoryElementsInternal(Document.INTROS.pageBody(pageName), pageIdx);
+	}
+
+	private void createStoryElementsInternal(String storyText, int pageIdx) {
 		int w = (int)(Camera.main.width - insets.left - insets.right);
 		int h = (int)(Camera.main.height - insets.top - insets.bottom);
 
-		storyMessage = PixelScene.renderTextBlock(Document.INTROS.pageBody(region), 7);
+		storyMessage = PixelScene.renderTextBlock(storyText, 7);
 		storyMessage.maxWidth( PixelScene.landscape() ? 180 : 125);
 		storyMessage.setPos(insets.left+(w-storyMessage.width())/2f, insets.top+(h-storyMessage.height())/2f);
 		storyMessage.alpha(0);  // Start at 0, fade in during STATIC
@@ -772,6 +786,7 @@ public class InterlevelScene extends PixelScene {
 		add(storyBG);
 		add(storyMessage);
 
+		final int region = pageIdx;
 		btnContinue = new StyledButton(Chrome.Type.TOAST_TR, Messages.get(InterlevelScene.class, "continue"), 8){
 			@Override
 			protected void onClick() {

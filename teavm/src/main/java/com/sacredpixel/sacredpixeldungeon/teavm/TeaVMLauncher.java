@@ -60,8 +60,8 @@ public class TeaVMLauncher {
             log("TeaVMLauncher: compression disabled");
 
             // Game.version must be in x.x.x format for RankingsScene version display
-            Game.version = "4.1.4";
-            Game.versionCode = 912;
+            Game.version = "4.2.0";
+            Game.versionCode = 920;
             log("TeaVMLauncher: version set");
 
             if (UpdateImpl.supportsUpdates()) {
@@ -470,6 +470,10 @@ public class TeaVMLauncher {
         };
 
         installJsMusicHooks(pauseCallback, resumeCallback, triggerMusicCallback);
+
+        // Notify JS that the music hook is installed.
+        // If audio was unlocked before this point, JS will now trigger the pending restart.
+        notifyJavaMusicHookInstalled();
     }
 
     @JSBody(params = {"pauseCallback", "resumeCallback", "triggerCallback"}, script =
@@ -477,6 +481,12 @@ public class TeaVMLauncher {
         "window._spdResumeMusic = function() { resumeCallback(); };" +
         "window._spdTriggerMusicAfterUnlock = function() { triggerCallback(); };")
     private static native void installJsMusicHooks(JsVoidCallback pauseCallback, JsVoidCallback resumeCallback, JsVoidCallback triggerCallback);
+
+    @JSBody(script =
+        "if (typeof window._spdOnJavaMusicHookInstalled === 'function') {" +
+        "  window._spdOnJavaMusicHookInstalled();" +
+        "}")
+    private static native void notifyJavaMusicHookInstalled();
 
     @JSBody(script = "return navigator.language || navigator.userLanguage || 'en';")
     static native String getBrowserLanguage();

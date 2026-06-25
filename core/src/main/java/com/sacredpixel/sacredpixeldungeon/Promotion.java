@@ -38,10 +38,11 @@ public class Promotion {
     public static PromotionImpl impl = null;
 
     // Tutorial completion reward amount (in Toss Points)
-    public static final int TUTORIAL_REWARD_AMOUNT = 100;
+    // Values are injected from local.properties via PromotionConfig (generated at build time)
+    public static final int TUTORIAL_REWARD_AMOUNT = PromotionConfig.TUTORIAL_REWARD_AMOUNT;
 
-    // Test promotion code (replace with real code after approval)
-    public static final String TUTORIAL_PROMO_CODE = "TEST_SACRED_TUTORIAL";
+    // Promotion code (injected from local.properties via PromotionConfig)
+    public static final String TUTORIAL_PROMO_CODE = PromotionConfig.TUTORIAL_PROMO_CODE;
 
     public interface PromotionImpl {
         /**

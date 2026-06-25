@@ -1,0 +1,7 @@
+# Local configuration template
+# Copy this file to local.properties and fill in the values
+# local.properties is in .gitignore and will not be committed
+
+# Appsintoss Promotion Config
+promotion.code=YOUR_PROMOTION_CODE_HERE
+promotion.amount=0

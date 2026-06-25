@@ -29,6 +29,14 @@ public class DeviceCompat {
         return true;
     }
 
+    public static boolean isMobile(){
+        // TeaVM: detect mobile browser via User Agent
+        return isMobileBrowser();
+    }
+
+    @org.teavm.jso.JSBody(script = "return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);")
+    private static native boolean isMobileBrowser();
+
     public static boolean hasHardKeyboard(){
         return Gdx.input.isPeripheralAvailable(Input.Peripheral.HardwareKeyboard);
     }

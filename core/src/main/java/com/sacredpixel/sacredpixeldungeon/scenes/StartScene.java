@@ -436,6 +436,17 @@ public class StartScene extends PixelScene {
 		}
 
 		@Override
+		protected void onPointerDown() {
+			bg.brightness(1.2f);
+			Sample.INSTANCE.play(Assets.Sounds.CLICK);
+		}
+
+		@Override
+		protected void onPointerUp() {
+			bg.resetColor();
+		}
+
+		@Override
 		public void setFocused(boolean focused) {
 			// Only change background brightness, not text color
 			if (focused) {

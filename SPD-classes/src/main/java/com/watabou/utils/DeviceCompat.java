@@ -55,6 +55,10 @@ public class DeviceCompat {
 		return Gdx.app.getType() == Application.ApplicationType.WebGL;
 	}
 
+	public static boolean isMobile(){
+		return isAndroid() || isiOS();
+	}
+
 	public static boolean hasHardKeyboard(){
 		return Gdx.input.isPeripheralAvailable(Input.Peripheral.HardwareKeyboard);
 	}

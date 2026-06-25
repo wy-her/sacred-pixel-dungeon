@@ -51,6 +51,7 @@ public enum Music {
 
 	private float html5AudioRetryTimer = 0f;
 	private float html5PlayingCheckTimer = 0f;
+	private float html5TimeSincePlayRequest = 999f;
 
 	String[] trackList;
 	float[] trackChances;
@@ -144,6 +145,8 @@ public enum Music {
 	}
 
 	public synchronized void update(){
+		html5TimeSincePlayRequest += Game.elapsed;
+
 		if (fadeTotal > 0f && !paused){
 			fadeTime += Game.elapsed;
 
@@ -162,15 +165,24 @@ public enum Music {
 		//On HTML5, the onCompletion callback may not fire reliably.
 		//Check if music has stopped unexpectedly and restart/advance.
 		//Throttle isPlaying() check to every 0.5s to avoid per-frame JS interop overhead.
+		//On mobile, use a grace period to avoid misjudging blocked/loading state as track end.
 		if (DeviceCompat.isHTML5() && enabled && !paused && player != null && fadeTotal == -1f) {
 			html5PlayingCheckTimer += Game.elapsed;
 			if (html5PlayingCheckTimer >= 0.5f) {
 				html5PlayingCheckTimer = 0f;
 				if (!player.isPlaying()) {
+					// Grace period: mobile 5s, desktop 1s
+					// Prevents misjudging AudioContext suspended/blocked as track completion
+					float grace = DeviceCompat.isMobile() ? 5f : 1f;
+
 					if (looping) {
-						player.play();
+						if (html5TimeSincePlayRequest > grace) {
+							player.play();
+						}
 					} else if (trackList != null && trackList.length > 0) {
-						playNextTrack(player);
+						if (html5TimeSincePlayRequest > grace) {
+							playNextTrack(player);
+						}
 					}
 				}
 			}
@@ -178,8 +190,7 @@ public enum Music {
 
 		//On HTML5, if player is null it likely means audio init failed because
 		//howler.js hadn't loaded yet when we first tried. Retry every ~1 second.
-		//Also retry if player exists but isn't playing and audio has been unlocked,
-		//which means the initial play() was silently blocked by autoplay policy.
+		//On mobile, skip retry until AudioContext is unlocked.
 		if (DeviceCompat.isHTML5() && enabled && !paused) {
 			if (player == null) {
 				html5AudioRetryTimer += Game.elapsed;
@@ -243,6 +254,7 @@ public enum Music {
 	private synchronized void play(String track, com.badlogic.gdx.audio.Music.OnCompletionListener listener){
 		try {
 			fadeTime = fadeTotal = -1;
+			html5TimeSincePlayRequest = 0f;
 
 			player = Gdx.audio.newMusic(Gdx.files.internal(track));
 			player.setLooping(looping);
@@ -284,6 +296,19 @@ public enum Music {
 		}
 	}
 
+	/**
+	 * Stops and disposes the player without clearing trackList/lastPlayed.
+	 * Used by enable(false) to ensure pending/blocked players are cleaned up
+	 * while preserving track info for later restoration.
+	 */
+	private synchronized void stopPlayerOnly() {
+		if (player != null) {
+			player.stop();
+			player.dispose();
+			player = null;
+		}
+	}
+
 	public synchronized void stop() {
 		if (player != null) {
 			player.dispose();
@@ -312,10 +337,17 @@ public enum Music {
 	
 	public synchronized void enable( boolean value ) {
 		enabled = value;
-		if (isPlaying() && !value) {
-			stop();
-		} else
-		if (!isPlaying() && value) {
+
+		if (!value) {
+			// Always stop player when disabling, regardless of isPlaying() state.
+			// On mobile HTML5, player may exist in pending/blocked state where
+			// isPlaying() returns false but audio could start playing later.
+			stopPlayerOnly();
+			return;
+		}
+
+		// Enabling: try to restore previous tracks if not already playing
+		if (!isPlaying()) {
 			if (trackList != null){
 				playTracks(trackList, trackChances, shuffle);
 			} else if (lastPlayed != null) {

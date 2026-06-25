@@ -35,6 +35,7 @@ import com.sacredpixel.sacredpixeldungeon.sprites.ItemSprite;
 import com.sacredpixel.sacredpixeldungeon.sprites.ItemSpriteSheet;
 import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialManager;
 import com.sacredpixel.sacredpixeldungeon.Promotion;
+import com.sacredpixel.sacredpixeldungeon.SPDSettings;
 import com.sacredpixel.sacredpixeldungeon.ui.Icons;
 import com.sacredpixel.sacredpixeldungeon.ui.RedButton;
 import com.sacredpixel.sacredpixeldungeon.ui.RenderedTextBlock;
@@ -289,9 +290,11 @@ public class WndTutorial extends Window {
 				msg,
 				() -> {
 					// Grant promotion reward on Appsintoss (tutorial completion)
-					if (Promotion.isAvailable()) {
+					// Check duplicate participation prevention
+					if (Promotion.isAvailable() && !SPDSettings.tutorialPromotionClaimed()) {
 						Promotion.grantTutorialReward((success, message) -> {
 							if (success) {
+								SPDSettings.tutorialPromotionClaimed(true);
 								GLog.p(Messages.get(WndTutorial.class, "reward_granted"));
 							}
 						});

@@ -7,3 +7,47 @@ dependencies {
     api project(':SPD-classes')
     implementation project(':services')
 }
+
+// Load promotion config from local.properties
+def promotionCode = "DISABLED"
+def promotionAmount = 0
+
+def localPropsFile = rootProject.file('local.properties')
+if (localPropsFile.exists()) {
+    def localProps = new Properties()
+    localProps.load(new FileInputStream(localPropsFile))
+    if (localProps.containsKey('promotion.code')) {
+        promotionCode = localProps.getProperty('promotion.code')
+    }
+    if (localProps.containsKey('promotion.amount')) {
+        promotionAmount = Integer.parseInt(localProps.getProperty('promotion.amount'))
+    }
+}
+
+// Generate PromotionConfig.java
+def generatedSrcDir = file("$buildDir/generated/sources/promotion")
+
+task generatePromotionConfig {
+    outputs.dir generatedSrcDir
+    doLast {
+        def packageDir = file("$generatedSrcDir/com/sacredpixel/sacredpixeldungeon")
+        packageDir.mkdirs()
+        def configFile = file("$packageDir/PromotionConfig.java")
+        configFile.text = """/*
+ * AUTO-GENERATED FILE - DO NOT EDIT
+ * Generated from local.properties during build
+ */
+package com.sacredpixel.sacredpixeldungeon;
+
+public final class PromotionConfig {
+    public static final String TUTORIAL_PROMO_CODE = "${promotionCode}";
+    public static final int TUTORIAL_REWARD_AMOUNT = ${promotionAmount};
+
+    private PromotionConfig() {}
+}
+"""
+    }
+}
+
+sourceSets.main.java.srcDirs += generatedSrcDir
+compileJava.dependsOn generatePromotionConfig

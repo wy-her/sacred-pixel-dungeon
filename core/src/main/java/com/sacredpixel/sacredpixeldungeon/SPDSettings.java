@@ -466,4 +466,16 @@ public class SPDSettings extends GameSettings {
 	public static int fulLScreenMonitor(){
 		return getInt( KEY_FULLSCREEN_MONITOR, 0 );
 	}
+
+	//Promotion
+
+	public static final String KEY_TUTORIAL_PROMO_CLAIMED = "tutorial_promo_claimed";
+
+	public static void tutorialPromotionClaimed( boolean value ){
+		put( KEY_TUTORIAL_PROMO_CLAIMED, value );
+	}
+
+	public static boolean tutorialPromotionClaimed(){
+		return getBoolean( KEY_TUTORIAL_PROMO_CLAIMED, false );
+	}
 }
