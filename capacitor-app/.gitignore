@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Build output (copied from teavm build, contains compiled code with sensitive config)
+www/
+
+# Android build outputs
+android/app/build/
+android/.gradle/
+android/build/
+
+# iOS build outputs (if added later)
+ios/App/Pods/
+ios/App/build/
+
+# Environment files
+.env
+.env.local
