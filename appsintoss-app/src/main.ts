@@ -1,4 +1,4 @@
-import { TossAds, setDeviceOrientation, setScreenAwakeMode, loadFullScreenAd, showFullScreenAd, graniteEvent, setIosSwipeGestureEnabled, SafeAreaInsets, grantPromotionRewardForGame } from '@apps-in-toss/web-framework';
+import { TossAds, setDeviceOrientation, setScreenAwakeMode, loadFullScreenAd, showFullScreenAd, graniteEvent, setIosSwipeGestureEnabled, SafeAreaInsets, grantPromotionRewardForGame, requestReview } from '@apps-in-toss/web-framework';
 import { closeView } from '@apps-in-toss/web-bridge';
 import { initFirebase, loadCloudData, saveCloudData, type CloudSaveData } from './firebase';
 
@@ -221,6 +221,30 @@ import('@apps-in-toss/web-framework').then(sdk => {
     } catch (e) {
         console.error('grantPromotionRewardForGame error:', e);
         return 'ERROR';
+    }
+};
+
+// ========================================
+// 리뷰 요청 브릿지 함수
+// ========================================
+
+// 리뷰 API 가용 여부
+(window as any).__REVIEW_AVAILABLE__ = true;
+
+/**
+ * 앱 리뷰 요청
+ * 사용자가 만족을 느낄 만한 시점(튜토리얼 완료 등)에 호출
+ * @returns 성공 여부 (UI 표시 여부와 무관하게 요청 완료 시 true)
+ */
+(window as any).__requestReview__ = async (): Promise<boolean> => {
+    console.log('requestReview called');
+    try {
+        await requestReview();
+        console.log('Review request completed');
+        return true;
+    } catch (e) {
+        console.warn('Review request failed:', e);
+        return false;
     }
 };
 

@@ -32,6 +32,7 @@ import com.sacredpixel.sacredpixeldungeon.CloudSave;
 import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
 import com.sacredpixel.sacredpixeldungeon.Leaderboard;
 import com.sacredpixel.sacredpixeldungeon.Promotion;
+import com.sacredpixel.sacredpixeldungeon.Review;
 import com.sacredpixel.sacredpixeldungeon.SacredPixelDungeon;
 import com.sacredpixel.sacredpixeldungeon.services.news.News;
 import com.sacredpixel.sacredpixeldungeon.services.news.NewsImpl;
@@ -60,8 +61,8 @@ public class TeaVMLauncher {
             log("TeaVMLauncher: compression disabled");
 
             // Game.version must be in x.x.x format for RankingsScene version display
-            Game.version = "4.2.0";
-            Game.versionCode = 920;
+            Game.version = "4.2.1";
+            Game.versionCode = 921;
             log("TeaVMLauncher: version set");
 
             if (UpdateImpl.supportsUpdates()) {
@@ -215,17 +216,23 @@ public class TeaVMLauncher {
                 log("TeaVMLauncher: Appsintoss interstitial ad configured");
 
                 // Set up Appsintoss promotion implementation
+                // IMPORTANT: Uses async callback to wait for actual Apps in Toss API result.
+                // Success means the API returned { key: string }, not just that the call didn't throw.
                 Promotion.impl = new Promotion.PromotionImpl() {
                     @Override
                     public void grantReward(String promotionCode, int amount, Promotion.RewardCallback callback) {
-                        boolean result = TeaVMPromotion.grantReward(promotionCode, amount);
-                        if (callback != null) {
-                            if (result) {
-                                callback.onResult(true, "Reward granted");
-                            } else {
-                                callback.onResult(false, "Promotion API not available");
-                            }
-                        }
+                        TeaVMPromotion.grantRewardAsync(
+                                promotionCode,
+                                amount,
+                                new TeaVMPromotion.PromotionCallback() {
+                                    @Override
+                                    public void onComplete(boolean success, String message) {
+                                        if (callback != null) {
+                                            callback.onResult(success, message);
+                                        }
+                                    }
+                                }
+                        );
                     }
 
                     @Override
@@ -233,7 +240,28 @@ public class TeaVMLauncher {
                         return TeaVMPromotion.isAvailable();
                     }
                 };
-                log("TeaVMLauncher: Appsintoss promotion configured");
+                log("TeaVMLauncher: Appsintoss promotion configured (async)");
+
+                // Set up Appsintoss review implementation
+                Review.impl = new Review.ReviewImpl() {
+                    @Override
+                    public void request(Review.ReviewCallback callback) {
+                        TeaVMReview.requestReviewAsync(new TeaVMReview.ReviewCallback() {
+                            @Override
+                            public void onComplete(boolean success) {
+                                if (callback != null) {
+                                    callback.onComplete(success);
+                                }
+                            }
+                        });
+                    }
+
+                    @Override
+                    public boolean isAvailable() {
+                        return TeaVMReview.isAvailable();
+                    }
+                };
+                log("TeaVMLauncher: Appsintoss review configured");
             }
 
             final SacredPixelDungeon game = new SacredPixelDungeon(new TeaVMPlatformSupport());

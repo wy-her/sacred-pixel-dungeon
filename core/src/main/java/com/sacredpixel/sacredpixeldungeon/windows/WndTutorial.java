@@ -35,6 +35,7 @@ import com.sacredpixel.sacredpixeldungeon.sprites.ItemSprite;
 import com.sacredpixel.sacredpixeldungeon.sprites.ItemSpriteSheet;
 import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialManager;
 import com.sacredpixel.sacredpixeldungeon.Promotion;
+import com.sacredpixel.sacredpixeldungeon.Review;
 import com.sacredpixel.sacredpixeldungeon.SPDSettings;
 import com.sacredpixel.sacredpixeldungeon.ui.Icons;
 import com.sacredpixel.sacredpixeldungeon.ui.RedButton;
@@ -291,14 +292,27 @@ public class WndTutorial extends Window {
 				() -> {
 					// Grant promotion reward on Appsintoss (tutorial completion)
 					// Check duplicate participation prevention
+					// IMPORTANT: success=true means the Apps in Toss API returned { key },
+					// not just that the function call didn't throw an exception.
 					if (Promotion.isAvailable() && !SPDSettings.tutorialPromotionClaimed()) {
 						Promotion.grantTutorialReward((success, message) -> {
 							if (success) {
+								// Only mark as claimed when API confirms success with { key }
 								SPDSettings.tutorialPromotionClaimed(true);
 								GLog.p(Messages.get(WndTutorial.class, "reward_granted"));
 							}
+							// On failure: silently ignore - don't mark as claimed,
+							// user can retry on next tutorial completion.
+							// Showing failure message would confuse users on non-Appsintoss platforms.
 						});
 					}
+
+					// Request app review on Appsintoss (tutorial completion is a good moment)
+					// This is non-blocking and doesn't affect game flow
+					if (Review.isAvailable()) {
+						Review.request();
+					}
+
 					TutorialManager.reset();
 					Game.switchScene(TitleScene.class);
 				}

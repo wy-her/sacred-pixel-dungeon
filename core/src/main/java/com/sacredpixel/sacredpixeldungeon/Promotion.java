@@ -31,6 +31,9 @@ package com.sacredpixel.sacredpixeldungeon;
  * Usage:
  * - Call Promotion.grantTutorialReward() when tutorial is completed
  * - The implementation handles Appsintoss-specific API calls
+ *
+ * IMPORTANT: Success means the Apps in Toss API returned { key: string }.
+ * A mere JS function call without exception does NOT mean success.
  */
 public class Promotion {
 
@@ -44,12 +47,15 @@ public class Promotion {
     // Promotion code (injected from local.properties via PromotionConfig)
     public static final String TUTORIAL_PROMO_CODE = PromotionConfig.TUTORIAL_PROMO_CODE;
 
+    // Prevent duplicate requests while one is in flight
+    private static boolean rewardInFlight = false;
+
     public interface PromotionImpl {
         /**
          * Grant promotion reward to user.
          * @param promotionCode The promotion code registered in Appsintoss console
          * @param amount The amount of Toss Points to grant
-         * @param callback Called with result (true = success, false = failure)
+         * @param callback Called with result (true = API returned { key }, false = any failure)
          */
         void grantReward(String promotionCode, int amount, RewardCallback callback);
 
@@ -64,10 +70,21 @@ public class Promotion {
     }
 
     /**
+     * Check if promotion is properly configured in build.
+     * Returns false if promotion.code is "DISABLED" or amount is 0.
+     */
+    public static boolean isConfigured() {
+        return TUTORIAL_REWARD_AMOUNT > 0
+                && TUTORIAL_PROMO_CODE != null
+                && !TUTORIAL_PROMO_CODE.isEmpty()
+                && !"DISABLED".equals(TUTORIAL_PROMO_CODE);
+    }
+
+    /**
      * Check if promotion system is available (Appsintoss only).
      */
     public static boolean isAvailable() {
-        return impl != null && impl.isAvailable();
+        return isConfigured() && impl != null && impl.isAvailable();
     }
 
     /**
@@ -81,15 +98,39 @@ public class Promotion {
     /**
      * Grant tutorial completion reward with callback.
      * Only works on Appsintoss platform.
+     *
+     * Success (callback true) means the Apps in Toss API returned { key }.
+     * Any other result (undefined, ERROR, errorCode, reject) means failure.
      */
     public static void grantTutorialReward(RewardCallback callback) {
-        if (impl != null && impl.isAvailable()) {
-            impl.grantReward(TUTORIAL_PROMO_CODE, TUTORIAL_REWARD_AMOUNT, callback);
-        } else {
-            // Not on Appsintoss - silently ignore
+        if (!isConfigured()) {
             if (callback != null) {
-                callback.onResult(false, "Promotion not available");
+                callback.onResult(false, "Promotion is not configured");
             }
+            return;
         }
+
+        if (impl == null || !impl.isAvailable()) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion API is not available");
+            }
+            return;
+        }
+
+        if (rewardInFlight) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion reward request is already in progress");
+            }
+            return;
+        }
+
+        rewardInFlight = true;
+
+        impl.grantReward(TUTORIAL_PROMO_CODE, TUTORIAL_REWARD_AMOUNT, (success, message) -> {
+            rewardInFlight = false;
+            if (callback != null) {
+                callback.onResult(success, message);
+            }
+        });
     }
 }
