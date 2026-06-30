@@ -10,9 +10,9 @@ allprojects {
         appName = 'Sacred Pixel Dungeon'
         appPackageName = 'com.sacredpixel.dungeon'
 
-        appVersionCode = 922
+        appVersionCode = 923
         // appVersionName must be in x.x.x format for RankingsScene version display
-        appVersionName = '4.2.2'
+        appVersionName = '4.2.3'
 
         appJavaCompatibility = JavaVersion.VERSION_11
 
