@@ -87,46 +87,51 @@ public class WebDataServiceImpl implements DataScene.DataService {
         StringBuilder sb = new StringBuilder();
 
         // Use Messages.get for proper localization, same format as DataScene
+        // Use \n\n as delimiter between stats for WndImportPreview to split and add GAP
         // 1. Rankings
-        sb.append(Messages.get(DataScene.class, "rankings", preview.rankingCount, preview.highestScore));
-        sb.append("\n");
+        sb.append(Messages.get(DataScene.class, "rankings", preview.rankingCount));
+        sb.append("\n\n");
 
-        // 2. Badges
+        // 2. Best record
+        sb.append(Messages.get(DataScene.class, "best_record", preview.highestScore));
+        sb.append("\n\n");
+
+        // 3. Badges
         sb.append(Messages.get(DataScene.class, "badges", preview.badgeCount, getTotalBadges()));
         if (preview.newBadges > 0) {
             sb.append(" (+").append(preview.newBadges).append(")");
         }
-        sb.append("\n");
+        sb.append("\n\n");
 
-        // 3. Catalog
+        // 4. Catalog
         sb.append(Messages.get(DataScene.class, "catalog", preview.catalogCount, getTotalCatalog()));
         if (preview.newCatalogItems > 0) {
             sb.append(" (+").append(preview.newCatalogItems).append(")");
         }
-        sb.append("\n");
+        sb.append("\n\n");
 
-        // 4. Bestiary
+        // 5. Bestiary
         sb.append(Messages.get(DataScene.class, "bestiary", preview.bestiaryCount, getTotalBestiary()));
         if (preview.newBestiaryEntries > 0) {
             sb.append(" (+").append(preview.newBestiaryEntries).append(")");
         }
-        sb.append("\n");
+        sb.append("\n\n");
 
-        // 5. Lore
+        // 6. Lore
         sb.append(Messages.get(DataScene.class, "lore", preview.loreCount, getTotalLore()));
         if (preview.newLorePages > 0) {
             sb.append(" (+").append(preview.newLorePages).append(")");
         }
-        sb.append("\n");
+        sb.append("\n\n");
 
-        // 6. Guide
+        // 7. Guide
         sb.append(Messages.get(DataScene.class, "guide", preview.guideCount, getTotalGuide()));
         if (preview.newGuidePages > 0) {
             sb.append(" (+").append(preview.newGuidePages).append(")");
         }
-        sb.append("\n");
+        sb.append("\n\n");
 
-        // 7. Alchemy
+        // 8. Alchemy
         sb.append(Messages.get(DataScene.class, "alchemy", preview.alchemyCount, getTotalAlchemy()));
         if (preview.newAlchemyPages > 0) {
             sb.append(" (+").append(preview.newAlchemyPages).append(")");

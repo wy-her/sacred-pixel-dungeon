@@ -1258,7 +1258,7 @@ public class SettingsScene extends PixelScene {
 
 			if (btnCredits != null) {
 				float creditsY = txtTransifex.bottom() + 4 * GAP;
-				btnCredits.setSize(width, BTN_HEIGHT);
+				btnCredits.setSize(width, LANG_BTN_HEIGHT);
 				btnCredits.setPos(x, creditsY);
 			}
 		}

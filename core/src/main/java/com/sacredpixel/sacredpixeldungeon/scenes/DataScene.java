@@ -264,9 +264,9 @@ public class DataScene extends PixelScene {
                 // Don't handle keys if not on DataScene
                 if (!(Game.scene() instanceof DataScene)) return false;
 
-                // Don't handle keys if a window is open
+                // Don't handle keys if an active window is open
                 for (Object v : members) {
-                    if (v instanceof Window) return false;
+                    if (v instanceof Window && ((Window) v).active) return false;
                 }
 
                 GameAction action = KeyBindings.getActionForKey(event);
@@ -325,6 +325,7 @@ public class DataScene extends PixelScene {
             KeyEvent.removeKeyListener(keyListener);
             keyListener = null;
         }
+        importDialogShown = false;
         super.destroy();
     }
 
@@ -337,9 +338,12 @@ public class DataScene extends PixelScene {
         for (Rankings.Record r : Rankings.INSTANCE.records) {
             if (r.score > highScore) highScore = r.score;
         }
-        pos = statSlot(x, pos, maxWidth, Messages.get(this, "rankings", rankCount, highScore));
+        pos = statSlot(x, pos, maxWidth, Messages.get(this, "rankings", rankCount));
 
-        // 2. Badge count
+        // 2. Best record
+        pos = statSlot(x, pos, maxWidth, Messages.get(this, "best_record", highScore));
+
+        // 3. Badge count
         int badgeCount = 0;
         int totalBadges = Badges.Badge.values().length;
         for (Badges.Badge b : Badges.Badge.values()) {
@@ -347,7 +351,7 @@ public class DataScene extends PixelScene {
         }
         pos = statSlot(x, pos, maxWidth, Messages.get(this, "badges", badgeCount, totalBadges));
 
-        // 3. Catalog count
+        // 4. Catalog count
         int catalogCount = 0;
         int totalCatalog = 0;
         for (Catalog cat : Catalog.values()) {
@@ -356,7 +360,7 @@ public class DataScene extends PixelScene {
         }
         pos = statSlot(x, pos, maxWidth, Messages.get(this, "catalog", catalogCount, totalCatalog));
 
-        // 4. Bestiary count
+        // 5. Bestiary count
         int bestiaryCount = 0;
         int totalBestiary = 0;
         for (Bestiary cat : Bestiary.values()) {
@@ -365,7 +369,7 @@ public class DataScene extends PixelScene {
         }
         pos = statSlot(x, pos, maxWidth, Messages.get(this, "bestiary", bestiaryCount, totalBestiary));
 
-        // 5. Lore documents count
+        // 6. Lore documents count
         int loreFound = 0;
         int loreTotal = 0;
         Document[] loreDocs = {Document.SEWERS_GUARD, Document.PRISON_WARDEN,
@@ -378,7 +382,7 @@ public class DataScene extends PixelScene {
         }
         pos = statSlot(x, pos, maxWidth, Messages.get(this, "lore", loreFound, loreTotal));
 
-        // 6. Guide pages count
+        // 7. Guide pages count
         int guideFound = 0;
         int guideTotal = Document.ADVENTURERS_GUIDE.pageNames().size();
         for (String page : Document.ADVENTURERS_GUIDE.pageNames()) {
@@ -386,7 +390,7 @@ public class DataScene extends PixelScene {
         }
         pos = statSlot(x, pos, maxWidth, Messages.get(this, "guide", guideFound, guideTotal));
 
-        // 7. Alchemy pages count
+        // 8. Alchemy pages count
         int alchemyFound = 0;
         int alchemyTotal = Document.ALCHEMY_GUIDE.pageNames().size();
         for (String page : Document.ALCHEMY_GUIDE.pageNames()) {
@@ -570,20 +574,19 @@ public class DataScene extends PixelScene {
             titlebar.setRect(0, 0, width, 0);
             add(titlebar);
 
-            // Preview text - render each line separately with 2pt spacing
+            // Preview text - split by \n\n and render each stat with GAP (same as Export)
             float previewY = titlebar.bottom() + 4;
-            String[] lines = preview.split("\n");
-            for (String line : lines) {
-                if (!line.isEmpty()) {
-                    RenderedTextBlock txt = PixelScene.renderTextBlock(line, 7);
-                    txt.maxWidth(width - 10);
-                    txt.setPos(0, previewY);
-                    add(txt);
-                    previewY += 2 + txt.height(); // 2pt gap between preview lines
-                }
+            String[] stats = preview.split("\n\n");
+            for (String stat : stats) {
+                if (stat.isEmpty()) continue;
+                RenderedTextBlock txt = PixelScene.renderTextBlock(stat, 7);
+                txt.maxWidth(width - 10);
+                txt.setPos(0, previewY);
+                add(txt);
+                previewY += GAP + txt.height();
             }
 
-            float btnY = previewY + 4; // 4pt gap before buttons
+            float btnY = previewY + 4; // 4pt gap before buttons (same as Export)
             float BTN_GAP = 2;
             float MARGIN = 5;
             float btnWidth = width - MARGIN * 2;

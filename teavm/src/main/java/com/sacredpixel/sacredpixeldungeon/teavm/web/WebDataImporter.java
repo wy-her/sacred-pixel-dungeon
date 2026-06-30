@@ -174,7 +174,7 @@ public class WebDataImporter {
         result.documentCount = countDocumentPages(result.document);
         result.guideCount = countDocumentPagesInRange(result.document, 0, 13);
         result.alchemyCount = countDocumentPagesInRange(result.document, 14, 22);
-        result.loreCount = countDocumentPagesInRange(result.document, 29, 58);
+        result.loreCount = countDocumentPagesInRange(result.document, 30, 59);
 
         // Rankings count
         int rankingCount = buf.get() & 0xFF;
