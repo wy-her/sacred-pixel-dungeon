@@ -251,7 +251,7 @@ public class HallsBossLevel extends Level {
 	@Override
 	public void occupyCell( Char ch ) {
 		// Don't seal if boss already defeated
-		if (Statistics.bossScores[4] == 0
+		if (Statistics.bossScores[4] <= 0
 				&& map[entrance()] == Terrain.ENTRANCE && map[exit()] != Terrain.EXIT
 				&& ch == Dungeon.hero && Dungeon.level.distance(ch.pos, entrance()) >= 2) {
 			seal();

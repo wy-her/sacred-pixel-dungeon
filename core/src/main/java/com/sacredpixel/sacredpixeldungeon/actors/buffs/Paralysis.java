@@ -26,6 +26,7 @@ package com.sacredpixel.sacredpixeldungeon.actors.buffs;
 
 import com.sacredpixel.sacredpixeldungeon.Dungeon;
 import com.sacredpixel.sacredpixeldungeon.actors.Char;
+import com.sacredpixel.sacredpixeldungeon.actors.hero.Hero;
 import com.sacredpixel.sacredpixeldungeon.messages.Messages;
 import com.sacredpixel.sacredpixeldungeon.sprites.CharSprite;
 import com.sacredpixel.sacredpixeldungeon.ui.BuffIndicator;
@@ -71,6 +72,12 @@ public class Paralysis extends FlavourBuff {
 		super.detach();
 		if (target.paralysed > 0)
 			target.paralysed--;
+		//On HTML5, reset hero's time to minimum actor time when paralysis ends.
+		//During paralysis, hero accumulates time (spends TICK each turn), which puts
+		//them behind enemies in turn order.
+		if (target instanceof Hero) {
+			target.timeToBeforeMin();
+		}
 	}
 	
 	@Override

@@ -28,6 +28,7 @@ import com.sacredpixel.sacredpixeldungeon.Assets;
 import com.sacredpixel.sacredpixeldungeon.Badges;
 import com.sacredpixel.sacredpixeldungeon.Chrome;
 import com.sacredpixel.sacredpixeldungeon.GamesInProgress;
+import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
 import com.sacredpixel.sacredpixeldungeon.SPDAction;
 import com.sacredpixel.sacredpixeldungeon.SPDSettings;
 import com.sacredpixel.sacredpixeldungeon.SacredPixelDungeon;
@@ -242,6 +243,14 @@ public class StartScene extends PixelScene {
 	}
 
 	@Override
+	public void update() {
+		super.update();
+
+		// Poll for interstitial ad completion callback
+		InterstitialAd.checkCallback();
+	}
+
+	@Override
 	public void destroy() {
 		if (keyListener != null) {
 			KeyEvent.removeKeyListener(keyListener);
@@ -427,9 +436,29 @@ public class StartScene extends PixelScene {
 		@Override
 		protected void onClick() {
 			if (newGame) {
-				GamesInProgress.selectedClass = null;
-				GamesInProgress.curSlot = slot;
-				SacredPixelDungeon.switchScene(HeroSelectScene.class);
+				// Show interstitial ad every 3rd run (after 2 runs completed)
+				if (SPDSettings.runCountSinceAd() >= 2 && InterstitialAd.isAvailable()) {
+					// Mark third play promotion as pending (for floor 1 reward)
+					if (!SPDSettings.thirdPlayPromotionClaimed()) {
+						SPDSettings.thirdPlayPromotionPending(true);
+					}
+					final int targetSlot = slot;
+					InterstitialAd.show(() -> {
+						Game.runOnRenderThread(() -> {
+							// Verify we're still on StartScene before proceeding
+							if (Game.scene() instanceof StartScene) {
+								SPDSettings.runCountSinceAd(0);
+								GamesInProgress.selectedClass = null;
+								GamesInProgress.curSlot = targetSlot;
+								SacredPixelDungeon.switchScene(HeroSelectScene.class);
+							}
+						});
+					});
+				} else {
+					GamesInProgress.selectedClass = null;
+					GamesInProgress.curSlot = slot;
+					SacredPixelDungeon.switchScene(HeroSelectScene.class);
+				}
 			} else {
 				SacredPixelDungeon.scene().add( new WndGameInProgress(slot));
 			}

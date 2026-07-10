@@ -75,12 +75,6 @@ public class Ghoul extends Mob {
 	}
 
 	@Override
-	public float attackDelay() {
-		//ghouls attack rapidly, getting 2 attacks per hero turn
-		return super.attackDelay()*0.5f;
-	}
-
-	@Override
 	public int drRoll() {
 		return super.drRoll() + Random.NormalIntRange(0, 4);
 	}

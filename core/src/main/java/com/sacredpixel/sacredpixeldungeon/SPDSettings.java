@@ -478,4 +478,53 @@ public class SPDSettings extends GameSettings {
 	public static boolean tutorialPromotionClaimed(){
 		return getBoolean( KEY_TUTORIAL_PROMO_CLAIMED, false );
 	}
+
+	//Review request tracking
+
+	public static final String KEY_FLOOR10_REVIEW_REQUESTED = "floor10_review_requested";
+
+	public static void floor10ReviewRequested( boolean value ){
+		put( KEY_FLOOR10_REVIEW_REQUESTED, value );
+	}
+
+	public static boolean floor10ReviewRequested(){
+		return getBoolean( KEY_FLOOR10_REVIEW_REQUESTED, false );
+	}
+
+	//Interstitial ad tracking (run count since last ad shown)
+
+	public static final String KEY_RUN_COUNT_SINCE_AD = "run_count_since_ad";
+
+	public static void runCountSinceAd( int value ){
+		put( KEY_RUN_COUNT_SINCE_AD, value );
+	}
+
+	public static int runCountSinceAd(){
+		return getInt( KEY_RUN_COUNT_SINCE_AD, 0 );
+	}
+
+	public static void incrementRunCountSinceAd(){
+		put( KEY_RUN_COUNT_SINCE_AD, runCountSinceAd() + 1 );
+	}
+
+	//Third play promotion tracking
+
+	public static final String KEY_THIRD_PLAY_PROMO_CLAIMED = "third_play_promo_claimed";
+	public static final String KEY_THIRD_PLAY_PROMO_PENDING = "third_play_promo_pending";
+
+	public static void thirdPlayPromotionClaimed( boolean value ){
+		put( KEY_THIRD_PLAY_PROMO_CLAIMED, value );
+	}
+
+	public static boolean thirdPlayPromotionClaimed(){
+		return getBoolean( KEY_THIRD_PLAY_PROMO_CLAIMED, false );
+	}
+
+	public static void thirdPlayPromotionPending( boolean value ){
+		put( KEY_THIRD_PLAY_PROMO_PENDING, value );
+	}
+
+	public static boolean thirdPlayPromotionPending(){
+		return getBoolean( KEY_THIRD_PLAY_PROMO_PENDING, false );
+	}
 }

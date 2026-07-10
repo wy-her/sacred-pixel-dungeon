@@ -111,6 +111,12 @@ public class Frost extends FlavourBuff {
 			target.paralysed--;
 		if (Dungeon.level.water[target.pos])
 			Buff.prolong(target, Chill.class, Chill.DURATION/2f);
+		//On HTML5, reset hero's time to minimum actor time when frost ends.
+		//During paralysis, hero accumulates time (spends TICK each turn), which puts
+		//them behind enemies in turn order.
+		if (target instanceof Hero) {
+			target.timeToBeforeMin();
+		}
 	}
 	
 	@Override

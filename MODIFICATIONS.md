@@ -12,8 +12,8 @@ Sacred Pixel Dungeon is built for **web browsers** using TeaVM (Java-to-JavaScri
 
 | Build | Command | Font Size | Use Case |
 |-------|---------|-----------|----------|
-| Cloudflare | `buildRelease` | Full (27MB) | Web deployment |
-| Capacitor | `buildRelease` + APK | Full (27MB) | Android wrapper |
+| Cloudflare | `buildRelease` | Subset (2MB) | Web deployment |
+| Capacitor | `buildRelease` + APK | Subset (2MB) | Android wrapper |
 | Apps In Toss | `buildAppsintoss` | Subset (2MB) | Toss mini-app |
 | Debug | `runDebug` | Full (27MB) | Local development |
 

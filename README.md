@@ -74,6 +74,8 @@ Requires **Java 21+** and Gradle (wrapper included).
 
 ### Production Build
 
+Requires: `pip install fonttools brotli` (for font subsetting)
+
 ```bash
 ./gradlew :teavm:buildRelease
 ```

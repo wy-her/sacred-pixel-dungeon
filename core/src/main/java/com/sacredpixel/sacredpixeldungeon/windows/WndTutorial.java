@@ -35,7 +35,6 @@ import com.sacredpixel.sacredpixeldungeon.sprites.ItemSprite;
 import com.sacredpixel.sacredpixeldungeon.sprites.ItemSpriteSheet;
 import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialManager;
 import com.sacredpixel.sacredpixeldungeon.Promotion;
-import com.sacredpixel.sacredpixeldungeon.Review;
 import com.sacredpixel.sacredpixeldungeon.SPDSettings;
 import com.sacredpixel.sacredpixeldungeon.ui.Icons;
 import com.sacredpixel.sacredpixeldungeon.ui.RedButton;
@@ -305,12 +304,6 @@ public class WndTutorial extends Window {
 							// user can retry on next tutorial completion.
 							// Showing failure message would confuse users on non-Appsintoss platforms.
 						});
-					}
-
-					// Request app review on Appsintoss (tutorial completion is a good moment)
-					// This is non-blocking and doesn't affect game flow
-					if (Review.isAvailable()) {
-						Review.request();
 					}
 
 					TutorialManager.reset();

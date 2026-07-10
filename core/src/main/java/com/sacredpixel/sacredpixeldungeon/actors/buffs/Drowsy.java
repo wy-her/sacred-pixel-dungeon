@@ -55,8 +55,11 @@ public class Drowsy extends FlavourBuff {
 
 	@Override
 	public boolean act(){
-		Buff.affect(target, MagicalSleep.class);
-
+		// Only apply MagicalSleep if not already present, to prevent re-application
+		// after damage wakes the target (fixes HTML5 timing issue)
+		if (target.buff(MagicalSleep.class) == null) {
+			Buff.affect(target, MagicalSleep.class);
+		}
 		return super.act();
 	}
 

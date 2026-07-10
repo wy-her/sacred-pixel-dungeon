@@ -39,9 +39,9 @@ public class MagicalSleep extends Buff {
 	@Override
 	public boolean attachTo( Char target ) {
 		if (!target.isImmune(Sleep.class) && super.attachTo( target )) {
-			
+
 			target.paralysed++;
-			
+
 			if (target.alignment == Char.Alignment.ALLY) {
 				if (target.HP == target.HT) {
 					if (target instanceof  Hero) GLog.i(Messages.get(this, "toohealthy"));
@@ -85,8 +85,14 @@ public class MagicalSleep extends Buff {
 		if (target.paralysed > 0) {
 			target.paralysed--;
 		}
+
 		if (target instanceof Hero) {
 			((Hero) target).resting = false;
+			//On HTML5, reset hero's time to minimum actor time when waking from sleep.
+			//During sleep, hero accumulates time (spends TICK each turn), which puts
+			//them behind enemies in turn order. By setting hero.time to before the minimum,
+			//the hero acts before all enemies after waking.
+			target.timeToBeforeMin();
 		} else if (target instanceof Mob && target.alignment == Char.Alignment.ALLY && ((Mob) target).state == ((Mob) target).SLEEPING){
 			((Mob) target).state = ((Mob) target).WANDERING;
 		}

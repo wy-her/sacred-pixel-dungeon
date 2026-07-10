@@ -11,6 +11,8 @@ dependencies {
 // Load promotion config from local.properties
 def promotionCode = "DISABLED"
 def promotionAmount = 0
+def thirdPlayCode = "DISABLED"
+def thirdPlayAmount = 0
 
 def localPropsFile = rootProject.file('local.properties')
 if (localPropsFile.exists()) {
@@ -21,6 +23,12 @@ if (localPropsFile.exists()) {
     }
     if (localProps.containsKey('promotion.amount')) {
         promotionAmount = Integer.parseInt(localProps.getProperty('promotion.amount'))
+    }
+    if (localProps.containsKey('promotion.thirdplay.code')) {
+        thirdPlayCode = localProps.getProperty('promotion.thirdplay.code')
+    }
+    if (localProps.containsKey('promotion.thirdplay.amount')) {
+        thirdPlayAmount = Integer.parseInt(localProps.getProperty('promotion.thirdplay.amount'))
     }
 }
 
@@ -42,6 +50,9 @@ package com.sacredpixel.sacredpixeldungeon;
 public final class PromotionConfig {
     public static final String TUTORIAL_PROMO_CODE = "${promotionCode}";
     public static final int TUTORIAL_REWARD_AMOUNT = ${promotionAmount};
+
+    public static final String THIRD_PLAY_PROMO_CODE = "${thirdPlayCode}";
+    public static final int THIRD_PLAY_REWARD_AMOUNT = ${thirdPlayAmount};
 
     private PromotionConfig() {}
 }

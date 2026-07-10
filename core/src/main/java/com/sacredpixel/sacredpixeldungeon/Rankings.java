@@ -41,6 +41,7 @@ import com.sacredpixel.sacredpixeldungeon.items.scrolls.Scroll;
 import com.sacredpixel.sacredpixeldungeon.items.trinkets.Trinket;
 import com.sacredpixel.sacredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.sacredpixel.sacredpixeldungeon.journal.Notes;
+import com.sacredpixel.sacredpixeldungeon.levels.TestLevel;
 import com.sacredpixel.sacredpixeldungeon.messages.Messages;
 import com.sacredpixel.sacredpixeldungeon.ui.QuickSlotButton;
 import com.sacredpixel.sacredpixeldungeon.ui.Toolbar;
@@ -171,6 +172,11 @@ public enum Rankings {
 		}
 
 		Badges.validateGamesPlayed();
+
+		// Increment run count for interstitial ad tracking (excludes TestLevel runs)
+		if (!(Dungeon.level instanceof TestLevel)) {
+			SPDSettings.incrementRunCountSinceAd();
+		}
 
 		// Submit score to Appsintoss leaderboard (only for non-custom-seed runs)
 		if (Leaderboard.isAvailable() && rec.customSeed.isEmpty() && rec.score > 0) {

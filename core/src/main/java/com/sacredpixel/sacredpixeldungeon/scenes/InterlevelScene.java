@@ -26,7 +26,6 @@ package com.sacredpixel.sacredpixeldungeon.scenes;
 
 import com.sacredpixel.sacredpixeldungeon.Assets;
 import com.sacredpixel.sacredpixeldungeon.Chrome;
-import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
 import com.sacredpixel.sacredpixeldungeon.Dungeon;
 import com.sacredpixel.sacredpixeldungeon.GamesInProgress;
 import com.sacredpixel.sacredpixeldungeon.SacredPixelDungeon;
@@ -150,14 +149,8 @@ public class InterlevelScene extends PixelScene {
 	private boolean isStoryFloor = false;
 	private int storyRegion = 0;
 	private boolean exitAfterFadeIn = false;  // For non-story floors after region complete
-	private boolean interstitialAdShown = false;  // Prevents duplicate ad/story display
+	private boolean postRegionCompleteStarted = false;  // Prevents duplicate story display after WndRegionComplete
 	private boolean storyCreatedForFadeIn = false;  // Story elements created, waiting for fade-in
-
-	// Interstitial ad callback timeout (prevents infinite black screen)
-	private boolean waitingForAdCallback = false;
-	private float adCallbackWaitTime = 0f;
-	// Timeout after ad completion is detected (via timestamp) but callback didn't arrive
-	private static final float AD_POST_COMPLETE_TIMEOUT = 3f;  // 3 seconds after ad ends
 
 	// For floor 1: show Dungeon intro first, then Sewers intro
 	private boolean hasPendingSecondStory = false;
@@ -437,35 +430,10 @@ public class InterlevelScene extends PixelScene {
 	public void update() {
 		super.update();
 
-		// Poll for interstitial ad completion callback
-		InterstitialAd.checkCallback();
-
-		// Timeout safety net for interstitial ad callback
-		// Prevents infinite black screen if JS callback fails to reach Java
-		// Uses timestamp-based detection: if ad completed but callback didn't arrive within timeout
-		if (waitingForAdCallback) {
-			// Check if ad has completed (via JavaScript timestamp)
-			double adCompletedTimestamp = InterstitialAd.getAdCompletedTimestamp();
-			if (adCompletedTimestamp > 0) {
-				// Ad completed - start counting from completion time
-				double currentTime = System.currentTimeMillis();
-				double elapsedSinceCompletion = (currentTime - adCompletedTimestamp) / 1000.0;
-
-				if (elapsedSinceCompletion >= AD_POST_COMPLETE_TIMEOUT) {
-					// Timeout passed since ad completed but callback never arrived
-					waitingForAdCallback = false;
-					InterstitialAd.clearAdCompletedTimestamp();
-					Game.reportException(new RuntimeException(
-						"Interstitial ad callback timeout " + AD_POST_COMPLETE_TIMEOUT + "s after ad completion - forcing proceed"));
-					proceedToStory();
-				}
-			}
-		}
-
 		//STAGE_CLEAR phase: create WndRegionComplete (no fade-in)
-		//Added !interstitialAdShown and depth check to prevent duplicate window after resetScene()
-		//This fixes bug where resize during ad causes scene recreation and WndRegionComplete appears twice
-		if (phase == Phase.STAGE_CLEAR && !stageClearWindowCreated && !interstitialAdShown) {
+		//Added !postRegionCompleteStarted and depth check to prevent duplicate window after resetScene()
+		//This fixes bug where resize causes scene recreation and WndRegionComplete appears twice
+		if (phase == Phase.STAGE_CLEAR && !stageClearWindowCreated && !postRegionCompleteStarted) {
 			//Depth check prevents duplicate creation if resetScene() recreates InterlevelScene
 			if (Dungeon.depth != lastDepthWithStageClear) {
 				stageClearWindowCreated = true;
@@ -771,6 +739,9 @@ public class InterlevelScene extends PixelScene {
 	}
 
 	private void createStoryElementsInternal(String storyText, int pageIdx) {
+		// Mark story as read immediately when displayed, to prevent loss if app closes before button click
+		Document.INTROS.readPage(pageIdx);
+
 		int w = (int)(Camera.main.width - insets.left - insets.right);
 		int h = (int)(Camera.main.height - insets.top - insets.bottom);
 
@@ -786,12 +757,10 @@ public class InterlevelScene extends PixelScene {
 		add(storyBG);
 		add(storyMessage);
 
-		final int region = pageIdx;
 		btnContinue = new StyledButton(Chrome.Type.TOAST_TR, Messages.get(InterlevelScene.class, "continue"), 8){
 			@Override
 			protected void onClick() {
 				btnContinue.enable(false);
-				Document.INTROS.readPage(region);
 				startStoryFadeOut();
 			}
 		};
@@ -806,7 +775,6 @@ public class InterlevelScene extends PixelScene {
 				// Require minimum delay after button is enabled to prevent accidental dismissal
 				if (!keyEvent.pressed && btnContinue.active && btnContinueEnabledTime >= BTN_INPUT_DELAY){
 					btnContinue.enable(false);
-					Document.INTROS.readPage(region);
 					KeyEvent.removeKeyListener(this);
 					startStoryFadeOut();
 					return true;
@@ -889,41 +857,20 @@ public class InterlevelScene extends PixelScene {
 	// Called after WndRegionComplete closes (floors 6,11,16,21,26)
 	// Creates story elements and starts fade-in for story floors
 	// For non-story floors (26), keeps black background and transitions to GameScene
+	// Called after WndRegionComplete closes (floors 6,11,16,21,26)
+	// Proceeds to story for story floors, or directly to GameScene for floor 26
 	private void startPostRegionComplete() {
-		// Prevent duplicate calls (e.g., from ad callback race conditions)
-		if (interstitialAdShown) return;
-		interstitialAdShown = true;
+		// Prevent duplicate calls
+		if (postRegionCompleteStarted) return;
+		postRegionCompleteStarted = true;
 
 		stageClearPending = false;
 
-		// Show interstitial ad for floors 6, 11, 16, 21 (not 26)
-		// Ad is preloaded when boss is killed on floors 5, 10, 15, 20
-		int depth = Dungeon.depth;
-		if (depth == 6 || depth == 11 || depth == 16 || depth == 21) {
-			final InterlevelScene scene = this;
-			// Start timeout tracking for ad callback
-			waitingForAdCallback = true;
-			adCallbackWaitTime = 0f;
-			InterstitialAd.show(() -> {
-				// Ad completed (or skipped/timed out) - proceed to story
-				// Must run on render thread since callback comes from JavaScript
-				Game.runOnRenderThread(new com.watabou.utils.Callback() {
-					@Override
-					public void call() {
-						if (waitingForAdCallback) {
-							waitingForAdCallback = false;
-							scene.proceedToStory();
-						}
-					}
-				});
-			});
-		} else {
-			// Floor 26 or other - no ad, proceed directly
-			proceedToStory();
-		}
+		// Proceed directly to story (no more floor-based ads here)
+		proceedToStory();
 	}
 
-	// Called after interstitial ad completes (or immediately if no ad)
+	// Proceeds to story display or GameScene
 	private void proceedToStory() {
 		if (isStoryFloor) {
 			// Restore background visibility but start with alpha 0 for smooth fade-in

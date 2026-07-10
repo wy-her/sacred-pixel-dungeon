@@ -32,6 +32,7 @@ import com.sacredpixel.sacredpixeldungeon.actors.mobs.Mob;
 import com.sacredpixel.sacredpixeldungeon.levels.VaultLevel;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Bundlable;
+import com.watabou.utils.DeviceCompat;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.SparseArray;
 import com.watabou.utils.ThreadCompat;
@@ -116,6 +117,12 @@ public abstract class Actor implements Bundlable {
 	public void timeToNow() {
 		time = now;
 	}
+
+	//Sets this actor's time to slightly before the minimum actor time,
+	//ensuring they act before all other actors. Used when hero wakes from sleep.
+	public void timeToBeforeMin() {
+		time = minActorTime() - 0.001f;
+	}
 	
 	protected void diactivate() {
 		time = Float.MAX_VALUE;
@@ -178,7 +185,19 @@ public abstract class Actor implements Bundlable {
 	public static float now(){
 		return now;
 	}
-	
+
+	//Returns the minimum time among all actors, useful for resetting an actor's
+	//time to ensure they act before all others (e.g., when waking from sleep)
+	public static synchronized float minActorTime() {
+		float min = Float.MAX_VALUE;
+		for (Actor actor : all) {
+			if (actor.time < min) {
+				min = actor.time;
+			}
+		}
+		return min == Float.MAX_VALUE ? now : min;
+	}
+
 	public static synchronized void clear() {
 
 		now = 0;
@@ -368,6 +387,19 @@ public abstract class Actor implements Bundlable {
 							continue;
 						}
 
+						//On HTML5, track if hero is ready (waiting for player input)
+						//This is checked separately because interrupt() can clear waitingForCallback
+						//but hero.ready remains true, indicating the hero is still waiting for input
+						if (ThreadCompat.currentThread() == null
+								&& actor == Dungeon.hero
+								&& Dungeon.hero.ready) {
+							heroWaiting = true;
+							heroTime = actor.time;
+							//Don't skip - let the hero be considered for selection so it can
+							//process any pending curAction. Hero.act() will return false if
+							//still waiting for input, which is correct behavior.
+						}
+
 						//some actors will always go before others if time is equal.
 						if (actor.time < earliest ||
 								actor.time == earliest && (current == null || actor.actPriority > current.actPriority)) {
@@ -377,13 +409,13 @@ public abstract class Actor implements Bundlable {
 
 					}
 				}
-				//On HTML5, if hero is waiting for player input, only allow actors
-				//whose time is strictly before the hero's time to act.
-				//This lets mobs that should act before the hero finish their turns,
-				//while preventing mobs from acting out of order after the hero.
-				//Allow VFX actors (like Pushing) to proceed even when hero is waiting,
-				//and allow actors whose time is strictly before the hero
+				//On HTML5, if hero is waiting for player input, block actors whose
+				//time >= heroTime. This allows fast-attacking enemies (like Monks) to
+				//complete their turn while preventing enemies from acting after the hero.
+				//The sleep wake-up issue is handled in MagicalSleep.detach() by resetting
+				//hero.time to the minimum actor time.
 				if (heroWaiting && current != null
+						&& current != Dungeon.hero
 						&& current.time >= heroTime
 						&& current.actPriority < VFX_PRIO) {
 					current = null;

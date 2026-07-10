@@ -47,6 +47,10 @@ public class Promotion {
     // Promotion code (injected from local.properties via PromotionConfig)
     public static final String TUTORIAL_PROMO_CODE = PromotionConfig.TUTORIAL_PROMO_CODE;
 
+    // Third play reward (granted on 3rd run start, floor 1 entry)
+    public static final int THIRD_PLAY_REWARD_AMOUNT = PromotionConfig.THIRD_PLAY_REWARD_AMOUNT;
+    public static final String THIRD_PLAY_PROMO_CODE = PromotionConfig.THIRD_PLAY_PROMO_CODE;
+
     // Prevent duplicate requests while one is in flight
     private static boolean rewardInFlight = false;
 
@@ -127,6 +131,59 @@ public class Promotion {
         rewardInFlight = true;
 
         impl.grantReward(TUTORIAL_PROMO_CODE, TUTORIAL_REWARD_AMOUNT, (success, message) -> {
+            rewardInFlight = false;
+            if (callback != null) {
+                callback.onResult(success, message);
+            }
+        });
+    }
+
+    /**
+     * Check if third play promotion is properly configured in build.
+     */
+    public static boolean isThirdPlayConfigured() {
+        return THIRD_PLAY_REWARD_AMOUNT > 0
+                && THIRD_PLAY_PROMO_CODE != null
+                && !THIRD_PLAY_PROMO_CODE.isEmpty()
+                && !"DISABLED".equals(THIRD_PLAY_PROMO_CODE);
+    }
+
+    /**
+     * Check if third play promotion is available.
+     */
+    public static boolean isThirdPlayAvailable() {
+        return isThirdPlayConfigured() && impl != null && impl.isAvailable();
+    }
+
+    /**
+     * Grant third play reward (on 3rd run start, floor 1 entry).
+     * Only works on Appsintoss platform.
+     */
+    public static void grantThirdPlayReward(RewardCallback callback) {
+        if (!isThirdPlayConfigured()) {
+            if (callback != null) {
+                callback.onResult(false, "Third play promotion is not configured");
+            }
+            return;
+        }
+
+        if (impl == null || !impl.isAvailable()) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion API is not available");
+            }
+            return;
+        }
+
+        if (rewardInFlight) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion reward request is already in progress");
+            }
+            return;
+        }
+
+        rewardInFlight = true;
+
+        impl.grantReward(THIRD_PLAY_PROMO_CODE, THIRD_PLAY_REWARD_AMOUNT, (success, message) -> {
             rewardInFlight = false;
             if (callback != null) {
                 callback.onResult(success, message);

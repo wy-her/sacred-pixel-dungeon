@@ -55,10 +55,18 @@ tasks.register('buildRelease', JavaExec) {
             from 'webapp/styles.css'
             into webappDir
         }
-        // Copy fonts
-        copy {
-            from 'webapp/fonts'
-            into "${webappDir}/fonts"
+        // Run font subsetting script (outputs directly to cloudflare/webapp/fonts/)
+        def pythonCmd = System.getProperty('os.name').toLowerCase().contains('windows') ? 'python' : 'python3'
+        def fontsOutputDir = "${webappDir}/fonts"
+        println "Running font subsetting script..."
+        def process = new ProcessBuilder(pythonCmd, 'scripts/subset_fonts.py', '--output-dir', fontsOutputDir)
+            .directory(projectDir)
+            .redirectErrorStream(true)
+            .start()
+        process.inputStream.eachLine { println it }
+        def exitCode = process.waitFor()
+        if (exitCode != 0) {
+            throw new GradleException("Font subsetting failed with exit code ${exitCode}")
         }
         // Copy banner
         copy {

@@ -49,6 +49,7 @@ import com.sacredpixel.sacredpixeldungeon.actors.buffs.Corruption;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Cripple;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Daze;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Doom;
+import com.sacredpixel.sacredpixeldungeon.actors.buffs.Drowsy;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Dread;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.FireImbue;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Frost;
@@ -154,6 +155,7 @@ import com.sacredpixel.sacredpixeldungeon.sprites.MobSprite;
 import com.sacredpixel.sacredpixeldungeon.ui.TargetHealthIndicator;
 import com.sacredpixel.sacredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.utils.DeviceCompat;
 import com.watabou.utils.BArray;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
@@ -830,7 +832,6 @@ public abstract class Char extends Actor {
 	}
 	
 	public void damage( int dmg, Object src ) {
-		
 		if (!isAlive()) {
 			return;
 		}
@@ -912,6 +913,9 @@ public abstract class Char extends Actor {
 		}
 		if (this.buff(MagicalSleep.class) != null){
 			Buff.detach(this, MagicalSleep.class);
+		}
+		if (this.buff(Drowsy.class) != null){
+			Buff.detach(this, Drowsy.class);
 		}
 		if (this.buff(Doom.class) != null && !isImmune(Doom.class)){
 			damage *= 1.67f;

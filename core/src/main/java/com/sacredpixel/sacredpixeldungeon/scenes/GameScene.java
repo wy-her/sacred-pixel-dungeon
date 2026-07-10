@@ -25,14 +25,16 @@
 package com.sacredpixel.sacredpixeldungeon.scenes;
 
 import com.sacredpixel.sacredpixeldungeon.Assets;
-import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
 import com.watabou.utils.GameSettings;
 import com.sacredpixel.sacredpixeldungeon.Badges;
 import com.sacredpixel.sacredpixeldungeon.Challenges;
 import com.sacredpixel.sacredpixeldungeon.Chrome;
 import com.sacredpixel.sacredpixeldungeon.Dungeon;
 import com.sacredpixel.sacredpixeldungeon.GamesInProgress;
+import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
+import com.sacredpixel.sacredpixeldungeon.Promotion;
 import com.sacredpixel.sacredpixeldungeon.Rankings;
+import com.sacredpixel.sacredpixeldungeon.Review;
 import com.sacredpixel.sacredpixeldungeon.SPDAction;
 import com.sacredpixel.sacredpixeldungeon.SPDSettings;
 import com.sacredpixel.sacredpixeldungeon.SacredPixelDungeon;
@@ -43,6 +45,7 @@ import com.sacredpixel.sacredpixeldungeon.actors.blobs.Blob;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.ChampionEnemy;
 import com.sacredpixel.sacredpixeldungeon.actors.hero.Hero;
+import com.sacredpixel.sacredpixeldungeon.actors.hero.HeroClass;
 import com.sacredpixel.sacredpixeldungeon.actors.hero.Talent;
 import com.sacredpixel.sacredpixeldungeon.actors.mobs.DemonSpawner;
 import com.sacredpixel.sacredpixeldungeon.actors.mobs.Ghoul;
@@ -635,7 +638,34 @@ public class GameScene extends PixelScene {
 						}
 					}
 				}
-				
+
+				// Request app review on first arrival at floor 10 (Tengu boss level)
+				// This is a meaningful milestone - player has invested significant time
+				if (Dungeon.depth == 10 && !SPDSettings.floor10ReviewRequested()) {
+					SPDSettings.floor10ReviewRequested(true);
+					if (Review.isAvailable()) {
+						Review.request();
+					}
+				}
+
+				// Grant third play promotion reward on floor 1 entry (after 3rd run ad shown)
+				// This is a one-time reward for reaching floor 1 on the 3rd game
+				if (Dungeon.depth == 1
+						&& SPDSettings.thirdPlayPromotionPending()
+						&& !SPDSettings.thirdPlayPromotionClaimed()) {
+					SPDSettings.thirdPlayPromotionPending(false);
+					if (Promotion.isThirdPlayAvailable()) {
+						Promotion.grantThirdPlayReward((success, message) -> {
+							if (success) {
+								SPDSettings.thirdPlayPromotionClaimed(true);
+								GLog.p(Messages.get(GameScene.class, "third_play_reward"));
+							}
+							// On failure: silently ignore - promotion is no longer pending,
+							// so it won't be retried. This is intentional to prevent abuse.
+						});
+					}
+				}
+
 			} else if (InterlevelScene.mode == InterlevelScene.Mode.RESET) {
 				GLog.h(Messages.get(this, "warp"));
 			} else if (InterlevelScene.mode == InterlevelScene.Mode.RESURRECT) {
@@ -863,6 +893,9 @@ public class GameScene extends PixelScene {
 	@Override
 	public synchronized void update() {
 		lastOffset = null;
+
+		// Poll for interstitial ad completion callback
+		InterstitialAd.checkCallback();
 
 		//Reset observe dedup counter at the start of each frame
 		Dungeon.resetObserveDedup();
@@ -1566,9 +1599,29 @@ public class GameScene extends PixelScene {
 		StyledButton restart = new StyledButton(Chrome.Type.GREY_BUTTON_TR, Messages.get(StartScene.class, "new"), 8){
 			@Override
 			protected void onClick() {
-				GamesInProgress.selectedClass = Dungeon.hero.heroClass;
-				GamesInProgress.curSlot = GamesInProgress.firstEmpty();
-				SacredPixelDungeon.switchScene(HeroSelectScene.class);
+				// Show interstitial ad every 3rd run (after 2 runs completed)
+				if (SPDSettings.runCountSinceAd() >= 2 && InterstitialAd.isAvailable()) {
+					// Mark third play promotion as pending (for floor 1 reward)
+					if (!SPDSettings.thirdPlayPromotionClaimed()) {
+						SPDSettings.thirdPlayPromotionPending(true);
+					}
+					final HeroClass selectedClass = Dungeon.hero.heroClass;
+					final int targetSlot = GamesInProgress.firstEmpty();
+					InterstitialAd.show(() -> {
+						Game.runOnRenderThread(() -> {
+							if (Game.scene() instanceof GameScene) {
+								SPDSettings.runCountSinceAd(0);
+								GamesInProgress.selectedClass = selectedClass;
+								GamesInProgress.curSlot = targetSlot;
+								SacredPixelDungeon.switchScene(HeroSelectScene.class);
+							}
+						});
+					});
+				} else {
+					GamesInProgress.selectedClass = Dungeon.hero.heroClass;
+					GamesInProgress.curSlot = GamesInProgress.firstEmpty();
+					SacredPixelDungeon.switchScene(HeroSelectScene.class);
+				}
 			}
 
 			@Override
@@ -1663,18 +1716,6 @@ public class GameScene extends PixelScene {
 			scene.showBanner( bossSlain );
 
 			Sample.INSTANCE.play( Assets.Sounds.BOSS );
-
-			// Preload interstitial ad for region complete floors (5, 10, 15, 20)
-			// Floor 25 (final boss) does not show ads
-			switch (Dungeon.depth) {
-				case 5:   // Goo (Sewers boss)
-				case 10:  // Tengu (Prison boss)
-				case 15:  // DM-300 (Caves boss)
-				case 20:  // Dwarf King (City boss)
-					InterstitialAd.resetBlock();  // Reset any previous block state
-					InterstitialAd.preload();
-					break;
-			}
 		}
 	}
 	

@@ -181,6 +181,7 @@ import com.sacredpixel.sacredpixeldungeon.windows.WndTradeItem;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.tweeners.Delayer;
+import com.watabou.utils.DeviceCompat;
 import com.watabou.utils.BArray;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
@@ -841,14 +842,13 @@ public class Hero extends Char {
 	
 	@Override
 	public boolean act() {
-		
 		//calls to dungeon.observe will also update hero's local FOV.
 		fieldOfView = Dungeon.level.heroFOV;
 
 		if (buff(Endure.EndureTracker.class) != null){
 			buff(Endure.EndureTracker.class).endEnduring();
 		}
-		
+
 		if (!ready) {
 			//do a full observe (including fog update) if not resting.
 			if (!resting || buff(MindVision.class) != null || buff(Awareness.class) != null) {
@@ -864,9 +864,7 @@ public class Hero extends Char {
 		BuffIndicator.refreshBoss();
 		
 		if (paralysed > 0) {
-			
 			curAction = null;
-			
 			spendAndNext( TICK );
 			return false;
 		}
@@ -957,7 +955,7 @@ public class Hero extends Char {
 		canSelfTrample = true;
 
 		AttackIndicator.updateState();
-		
+
 		GameScene.ready();
 	}
 	

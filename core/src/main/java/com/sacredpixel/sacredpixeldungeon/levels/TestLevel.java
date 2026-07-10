@@ -28,6 +28,7 @@ import com.sacredpixel.sacredpixeldungeon.Assets;
 import com.sacredpixel.sacredpixeldungeon.Dungeon;
 import com.sacredpixel.sacredpixeldungeon.Statistics;
 import com.sacredpixel.sacredpixeldungeon.actors.Char;
+import com.sacredpixel.sacredpixeldungeon.actors.mobs.Ghoul;
 import com.sacredpixel.sacredpixeldungeon.actors.mobs.Mob;
 import com.sacredpixel.sacredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.sacredpixel.sacredpixeldungeon.actors.mobs.npcs.Imp;
@@ -238,6 +239,17 @@ public class TestLevel extends Level {
 		Blacksmith.Quest.completed = false;
 		Blacksmith.Quest.bossBeaten = false;
 		Blacksmith.Quest.favor = 0;
+
+		// === Dwarf Ghouls for testing (x=20-21, y=14) ===
+		Ghoul ghoul1 = new Ghoul();
+		ghoul1.pos = 14 * W + 20;
+		ghoul1.state = ghoul1.SLEEPING;
+		mobs.add(ghoul1);
+
+		Ghoul ghoul2 = new Ghoul();
+		ghoul2.pos = 14 * W + 21;
+		ghoul2.state = ghoul2.SLEEPING;
+		mobs.add(ghoul2);
 	}
 
 	@Override
@@ -389,10 +401,11 @@ public class TestLevel extends Level {
 			}
 		}
 
-		// === All Scrolls (unidentified) ===
+		// === All Scrolls (identified) ===
 		for (Class<?> scrollClass : Generator.Category.SCROLL.classes) {
 			try {
 				Scroll scroll = (Scroll) Reflection.newInstance(scrollClass);
+				scroll.identify();
 				if (dropIdx < dropPositions.size()) {
 					drop(scroll, dropPositions.get(dropIdx++));
 				}
@@ -401,10 +414,11 @@ public class TestLevel extends Level {
 			}
 		}
 
-		// === All Exotic Scrolls (unidentified) ===
+		// === All Exotic Scrolls (identified) ===
 		for (Class<?> exoScrollClass : ExoticScroll.regToExo.values()) {
 			try {
 				ExoticScroll exoScroll = (ExoticScroll) Reflection.newInstance(exoScrollClass);
+				exoScroll.identify();
 				if (dropIdx < dropPositions.size()) {
 					drop(exoScroll, dropPositions.get(dropIdx++));
 				}
@@ -413,10 +427,11 @@ public class TestLevel extends Level {
 			}
 		}
 
-		// === All Potions (unidentified) ===
+		// === All Potions (identified) ===
 		for (Class<?> potionClass : Generator.Category.POTION.classes) {
 			try {
 				Potion potion = (Potion) Reflection.newInstance(potionClass);
+				potion.identify();
 				if (dropIdx < dropPositions.size()) {
 					drop(potion, dropPositions.get(dropIdx++));
 				}
@@ -425,10 +440,11 @@ public class TestLevel extends Level {
 			}
 		}
 
-		// === All Exotic Potions (unidentified) ===
+		// === All Exotic Potions (identified) ===
 		for (Class<?> exoPotionClass : ExoticPotion.regToExo.values()) {
 			try {
 				ExoticPotion exoPotion = (ExoticPotion) Reflection.newInstance(exoPotionClass);
+				exoPotion.identify();
 				if (dropIdx < dropPositions.size()) {
 					drop(exoPotion, dropPositions.get(dropIdx++));
 				}
