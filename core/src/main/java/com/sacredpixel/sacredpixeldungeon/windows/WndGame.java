@@ -26,7 +26,6 @@ package com.sacredpixel.sacredpixeldungeon.windows;
 
 import com.sacredpixel.sacredpixeldungeon.Dungeon;
 import com.sacredpixel.sacredpixeldungeon.GamesInProgress;
-import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
 import com.sacredpixel.sacredpixeldungeon.SPDSettings;
 import com.sacredpixel.sacredpixeldungeon.SacredPixelDungeon;
 import com.sacredpixel.sacredpixeldungeon.messages.Messages;
@@ -82,30 +81,9 @@ public class WndGame extends Window {
 			addButton( curBtn = new RedButton( Messages.get(this, "start") ) {
 				@Override
 				protected void onClick() {
-					// Show interstitial ad every 3rd run (after 2 runs completed)
-					if (SPDSettings.runCountSinceAd() >= 2 && InterstitialAd.isAvailable()) {
-						// Mark third play promotion as pending (for floor 1 reward)
-						if (!SPDSettings.thirdPlayPromotionClaimed()) {
-							SPDSettings.thirdPlayPromotionPending(true);
-						}
-						final HeroClass selectedClass = Dungeon.hero != null ? Dungeon.hero.heroClass : HeroClass.WARRIOR;
-						final int targetSlot = GamesInProgress.firstEmpty();
-						hide();
-						InterstitialAd.show(() -> {
-							Game.runOnRenderThread(() -> {
-								if (Game.scene() instanceof GameScene) {
-									SPDSettings.runCountSinceAd(0);
-									GamesInProgress.selectedClass = selectedClass;
-									GamesInProgress.curSlot = targetSlot;
-									SacredPixelDungeon.switchScene(HeroSelectScene.class);
-								}
-							});
-						});
-					} else {
-						GamesInProgress.selectedClass = Dungeon.hero != null ? Dungeon.hero.heroClass : HeroClass.WARRIOR;
-						GamesInProgress.curSlot = GamesInProgress.firstEmpty();
-						SacredPixelDungeon.switchScene(HeroSelectScene.class);
-					}
+					GamesInProgress.selectedClass = Dungeon.hero != null ? Dungeon.hero.heroClass : HeroClass.WARRIOR;
+					GamesInProgress.curSlot = GamesInProgress.firstEmpty();
+					SacredPixelDungeon.switchScene(HeroSelectScene.class);
 				}
 			} );
 			

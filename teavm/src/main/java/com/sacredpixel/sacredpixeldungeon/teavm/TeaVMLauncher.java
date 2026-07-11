@@ -172,18 +172,6 @@ public class TeaVMLauncher {
                     }
 
                     @Override
-                    public void preload() {
-                        if (TeaVMInterstitialAd.isAvailable()) {
-                            TeaVMInterstitialAd.preload();
-                        }
-                    }
-
-                    @Override
-                    public boolean isPreloaded() {
-                        return TeaVMInterstitialAd.isPreloaded();
-                    }
-
-                    @Override
                     public void checkCallback() {
                         // Poll for ad completion flag and invoke our callback directly
                         // DO NOT call TeaVMInterstitialAd.checkAndInvokeCallback() - it clears the flag

@@ -29,6 +29,7 @@ import com.sacredpixel.sacredpixeldungeon.Challenges;
 import com.sacredpixel.sacredpixeldungeon.Chrome;
 import com.sacredpixel.sacredpixeldungeon.Dungeon;
 import com.sacredpixel.sacredpixeldungeon.GamesInProgress;
+import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
 import com.sacredpixel.sacredpixeldungeon.Rankings;
 import com.sacredpixel.sacredpixeldungeon.SPDAction;
 import com.sacredpixel.sacredpixeldungeon.SPDSettings;
@@ -180,6 +181,28 @@ public class HeroSelectScene extends PixelScene {
 				if (optionsPane != null && optionsPane.visible) return;
 				if (GamesInProgress.selectedClass == null) return;
 
+				// Show interstitial ad every 3rd run (after 2 runs completed)
+				if (SPDSettings.runCountSinceAd() >= 2 && InterstitialAd.isAvailable()) {
+					// Mark third play promotion as pending (for floor 1 reward)
+					if (!SPDSettings.thirdPlayPromotionClaimed()) {
+						SPDSettings.thirdPlayPromotionPending(true);
+					}
+					startBtn.active = false; // Prevent double-click
+					InterstitialAd.show(() -> {
+						Game.runOnRenderThread(() -> {
+							startBtn.active = true; // Always re-enable
+							if (Game.scene() instanceof HeroSelectScene) {
+								SPDSettings.runCountSinceAd(0);
+								proceedToGame();
+							}
+						});
+					});
+				} else {
+					proceedToGame();
+				}
+			}
+
+			private void proceedToGame() {
 				Dungeon.hero = null;
 				SPDSettings.customSeed("");
 				Dungeon.initSeed();
@@ -502,6 +525,7 @@ public class HeroSelectScene extends PixelScene {
 	@Override
 	public void update() {
 		super.update();
+		InterstitialAd.checkCallback();
 		if (SPDSettings.intro() && Rankings.INSTANCE.totalNumber > 0){
 			SPDSettings.intro(false);
 		}

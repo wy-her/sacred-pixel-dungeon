@@ -54,21 +54,6 @@ public class InterstitialAd {
         boolean isAvailable();
 
         /**
-         * Preload an interstitial ad in the background.
-         * Call this early (e.g., when boss dies) so the ad is ready to show instantly.
-         */
-        default void preload() {
-            // Default implementation does nothing
-        }
-
-        /**
-         * Check if an ad has been preloaded and is ready to show.
-         */
-        default boolean isPreloaded() {
-            return false;
-        }
-
-        /**
          * Poll for async ad completion callback.
          * Should be called from game's update loop.
          * This is needed because JavaScript-to-Java async callbacks may not work reliably.
@@ -114,8 +99,7 @@ public class InterstitialAd {
     }
 
     /**
-     * Reset ad blocking. Call this when preparing for a new ad
-     * (e.g., when boss is killed and preload starts).
+     * Reset ad blocking. Call this when preparing for a new game.
      */
     public static void resetBlock() {
         blocked = false;
@@ -157,24 +141,6 @@ public class InterstitialAd {
                 onComplete.run();
             }
         }
-    }
-
-    /**
-     * Preload an interstitial ad in the background.
-     * Call this when a boss dies (floors 5, 10, 15, 20) so the ad is ready
-     * to show instantly when the player clicks "Next Stage".
-     */
-    public static void preload() {
-        if (impl != null && impl.isAvailable()) {
-            impl.preload();
-        }
-    }
-
-    /**
-     * Check if an ad has been preloaded and is ready to show.
-     */
-    public static boolean isPreloaded() {
-        return impl != null && impl.isPreloaded();
     }
 
     /**

@@ -1599,29 +1599,9 @@ public class GameScene extends PixelScene {
 		StyledButton restart = new StyledButton(Chrome.Type.GREY_BUTTON_TR, Messages.get(StartScene.class, "new"), 8){
 			@Override
 			protected void onClick() {
-				// Show interstitial ad every 3rd run (after 2 runs completed)
-				if (SPDSettings.runCountSinceAd() >= 2 && InterstitialAd.isAvailable()) {
-					// Mark third play promotion as pending (for floor 1 reward)
-					if (!SPDSettings.thirdPlayPromotionClaimed()) {
-						SPDSettings.thirdPlayPromotionPending(true);
-					}
-					final HeroClass selectedClass = Dungeon.hero.heroClass;
-					final int targetSlot = GamesInProgress.firstEmpty();
-					InterstitialAd.show(() -> {
-						Game.runOnRenderThread(() -> {
-							if (Game.scene() instanceof GameScene) {
-								SPDSettings.runCountSinceAd(0);
-								GamesInProgress.selectedClass = selectedClass;
-								GamesInProgress.curSlot = targetSlot;
-								SacredPixelDungeon.switchScene(HeroSelectScene.class);
-							}
-						});
-					});
-				} else {
-					GamesInProgress.selectedClass = Dungeon.hero.heroClass;
-					GamesInProgress.curSlot = GamesInProgress.firstEmpty();
-					SacredPixelDungeon.switchScene(HeroSelectScene.class);
-				}
+				GamesInProgress.selectedClass = Dungeon.hero.heroClass;
+				GamesInProgress.curSlot = GamesInProgress.firstEmpty();
+				SacredPixelDungeon.switchScene(HeroSelectScene.class);
 			}
 
 			@Override

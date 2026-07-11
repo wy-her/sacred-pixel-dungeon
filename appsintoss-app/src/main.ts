@@ -336,10 +336,6 @@ const AD_GROUP_ID = 'ait.v2.live.d042aa2a0f2a4b94';
 // 전면 광고 가용 여부 확인
 let interstitialAdAvailable = false;
 
-// 광고 프리로드 상태
-let adPreloaded = false;
-let adPreloading = false;
-
 // SDK에서 전면 광고 API를 제공하는지 확인
 // isSupported()가 true를 반환해야만 광고 사용 가능 (더 엄격한 체크)
 if (typeof loadFullScreenAd === 'function' && typeof showFullScreenAd === 'function') {
@@ -411,63 +407,10 @@ function notifyAdComplete() {
 }
 
 /**
- * 전면 광고 미리 로드 (보스 처치 시 호출)
- * 이미 로드 중이거나 로드된 경우 무시
+ * 전면 광고 표시
+ * 광고를 로드하고 표시함
  */
-(window as any).__preloadInterstitialAd__ = (): void => {
-    if (!interstitialAdAvailable) {
-        console.log('Interstitial ad preload: not available');
-        return;
-    }
-
-    if (adPreloaded) {
-        console.log('Interstitial ad preload: already loaded');
-        return;
-    }
-
-    if (adPreloading) {
-        console.log('Interstitial ad preload: already loading');
-        return;
-    }
-
-    adPreloading = true;
-    console.log('Interstitial ad preload: starting...');
-
-    try {
-        loadFullScreenAd({
-            options: { adGroupId: AD_GROUP_ID },
-            onEvent: (event) => {
-                console.log('Interstitial ad preload event:', event.type);
-                if (event.type === 'loaded') {
-                    adPreloaded = true;
-                    adPreloading = false;
-                    console.log('Interstitial ad preload: SUCCESS');
-                }
-            },
-            onError: (err) => {
-                adPreloading = false;
-                console.warn('Interstitial ad preload error:', err);
-            }
-        });
-    } catch (e) {
-        adPreloading = false;
-        console.warn('Interstitial ad preload exception:', e);
-    }
-};
-
-/**
- * 광고가 프리로드되어 있는지 확인
- */
-(window as any).__isAdPreloaded__ = (): boolean => {
-    return adPreloaded;
-};
-
-/**
- * 프리로드된 전면 광고 표시 (WndRegionComplete에서 호출)
- * - 광고가 프리로드 되어 있으면 즉시 표시
- * - 로드되지 않았으면 로드 후 표시 (fallback)
- */
-(window as any).__showPreloadedInterstitialAd__ = (): void => {
+(window as any).__showInterstitialAd__ = (): void => {
     if (!interstitialAdAvailable) {
         console.log('Interstitial ad not available - skipping');
         notifyAdComplete();
@@ -479,7 +422,6 @@ function notifyAdComplete() {
     const complete = () => {
         if (!completed) {
             completed = true;
-            adPreloaded = false; // 광고 표시 후 상태 리셋
             // Set timestamp for Java-side timeout fallback
             // If JS callback fails, Java can detect ad completion via this timestamp
             try {
@@ -495,7 +437,7 @@ function notifyAdComplete() {
         }
     };
 
-    // 타임아웃 설정 (3초 후 자동 진행 - 프리로드 시 보통 즉시 표시됨)
+    // 타임아웃 설정 (3초 후 자동 진행)
     // 유저 경험 우선: 3초 내 로드 안 되면 광고 스킵하고 게임 진행
     const timeout = setTimeout(() => {
         console.warn('Interstitial ad timeout (3s) - continuing without ad');
@@ -546,42 +488,25 @@ function notifyAdComplete() {
     };
 
     try {
-        if (adPreloaded) {
-            // 이미 로드된 광고 바로 표시
-            console.log('Interstitial ad: showing preloaded ad...');
-            doShowAd();
-        } else {
-            // 로드되지 않은 경우: 로드 후 표시 (fallback)
-            console.log('Interstitial ad: not preloaded, loading now...');
-
-            loadFullScreenAd({
-                options: { adGroupId: AD_GROUP_ID },
-                onEvent: (event) => {
-                    console.log('Interstitial ad load event:', event.type);
-                    if (event.type === 'loaded') {
-                        console.log('Interstitial ad loaded, showing...');
-                        doShowAd();
-                    }
-                },
-                onError: (err) => {
-                    console.warn('Interstitial ad load error:', err);
-                    clearAndComplete();
+        console.log('Interstitial ad: loading...');
+        loadFullScreenAd({
+            options: { adGroupId: AD_GROUP_ID },
+            onEvent: (event) => {
+                console.log('Interstitial ad load event:', event.type);
+                if (event.type === 'loaded') {
+                    console.log('Interstitial ad loaded, showing...');
+                    doShowAd();
                 }
-            });
-        }
+            },
+            onError: (err) => {
+                console.warn('Interstitial ad load error:', err);
+                clearAndComplete();
+            }
+        });
     } catch (e) {
         console.warn('Interstitial ad exception:', e);
         clearAndComplete();
     }
-};
-
-/**
- * 전면 광고 표시 (기존 호환성 유지 - 로드+표시 통합)
- * 게임 iframe은 __onInterstitialAdComplete__ 콜백을 미리 설정해야 함
- */
-(window as any).__showInterstitialAd__ = (): void => {
-    // 프리로드된 광고 표시 함수로 위임
-    (window as any).__showPreloadedInterstitialAd__();
 };
 
 // 앱인토스 SDK 초기화 및 배너 광고 로드

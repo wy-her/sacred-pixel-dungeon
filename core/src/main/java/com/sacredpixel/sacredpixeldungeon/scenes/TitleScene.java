@@ -220,28 +220,9 @@ public class TitleScene extends PixelScene {
 			@Override
 			protected void onClick() {
 				if (GamesInProgress.checkAll().size() == 0){
-					// Show interstitial ad every 3rd run (after 2 runs completed)
-					if (SPDSettings.runCountSinceAd() >= 2 && InterstitialAd.isAvailable()) {
-						// Mark third play promotion as pending (for floor 1 reward)
-						if (!SPDSettings.thirdPlayPromotionClaimed()) {
-							SPDSettings.thirdPlayPromotionPending(true);
-						}
-						InterstitialAd.show(() -> {
-							Game.runOnRenderThread(() -> {
-								// Verify we're still on TitleScene before proceeding
-								if (Game.scene() instanceof TitleScene) {
-									SPDSettings.runCountSinceAd(0);
-									GamesInProgress.selectedClass = null;
-									GamesInProgress.curSlot = 1;
-									SacredPixelDungeon.switchScene(HeroSelectScene.class);
-								}
-							});
-						});
-					} else {
-						GamesInProgress.selectedClass = null;
-						GamesInProgress.curSlot = 1;
-						SacredPixelDungeon.switchScene(HeroSelectScene.class);
-					}
+					GamesInProgress.selectedClass = null;
+					GamesInProgress.curSlot = 1;
+					SacredPixelDungeon.switchScene(HeroSelectScene.class);
 				} else {
 					SacredPixelDungeon.switchNoFade( StartScene.class );
 				}
