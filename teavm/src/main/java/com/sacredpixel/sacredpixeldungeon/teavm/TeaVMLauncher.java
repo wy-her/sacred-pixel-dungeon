@@ -43,6 +43,8 @@ import com.sacredpixel.sacredpixeldungeon.scenes.GameScene;
 import com.sacredpixel.sacredpixeldungeon.teavm.web.WebDataServiceImpl;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.audio.Music;
+import com.watabou.input.KeyEvent;
+import com.badlogic.gdx.Input;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
 import com.watabou.utils.FileUtils;
@@ -61,8 +63,8 @@ public class TeaVMLauncher {
             log("TeaVMLauncher: compression disabled");
 
             // Game.version must be in x.x.x format for RankingsScene version display
-            Game.version = "4.2.4";
-            Game.versionCode = 923;
+            Game.version = "4.2.5";
+            Game.versionCode = 925;
             log("TeaVMLauncher: version set");
 
             if (UpdateImpl.supportsUpdates()) {
@@ -363,6 +365,9 @@ public class TeaVMLauncher {
             // Register JS-callable music pause/resume for tab visibility changes
             registerMusicHooks();
 
+            // Register JS-callable back button handler for Appsintoss
+            registerBackButtonHook();
+
         } catch (Throwable t) {
             log("TeaVMLauncher FATAL: " + t);
             showError("TeaVMLauncher failed: " + t);
@@ -503,6 +508,30 @@ public class TeaVMLauncher {
         "  window._spdOnJavaMusicHookInstalled();" +
         "}")
     private static native void notifyJavaMusicHookInstalled();
+
+    // Back button handler for Appsintoss - simulates ESCAPE key press
+    private static void registerBackButtonHook() {
+        JsVoidCallback backCallback = new JsVoidCallback() {
+            @Override
+            public void call() {
+                try {
+                    // Simulate ESCAPE key press to trigger game's back action
+                    // ESCAPE is bound to SPDAction.BACK in SPDAction.java
+                    KeyEvent.addKeyEvent(new KeyEvent(Input.Keys.ESCAPE, true));
+                    KeyEvent.addKeyEvent(new KeyEvent(Input.Keys.ESCAPE, false));
+                    log("TeaVMLauncher: back button simulated (ESCAPE key)");
+                } catch (Throwable t) {
+                    log("TeaVMLauncher: back button error: " + t);
+                }
+            }
+        };
+        installBackButtonHook(backCallback);
+        log("TeaVMLauncher: back button hook registered");
+    }
+
+    @JSBody(params = {"callback"}, script =
+        "window.__onBackPressed__ = function() { callback(); };")
+    private static native void installBackButtonHook(JsVoidCallback callback);
 
     @JSBody(script = "return navigator.language || navigator.userLanguage || 'en';")
     static native String getBrowserLanguage();

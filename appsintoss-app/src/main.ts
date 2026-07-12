@@ -32,23 +32,34 @@ import('@apps-in-toss/web-framework').then(sdk => {
     console.warn('SDK config not available:', e);
 });
 
-// 앱인토스 네비게이션 바 높이 (SafeAreaInsets에 포함되지 않음)
-// SafeAreaInsets.top은 상태바/노치 높이만 반환하므로 네비게이션 바 높이를 별도로 추가
-const NAVIGATION_BAR_HEIGHT = 56;
-
-// SafeAreaInsets 적용 (네비게이션 바 높이 포함)
+// SafeAreaInsets 적용
+// SDK 2.10.5+에서는 네비게이션 바 높이가 SafeAreaInsets.top에 포함됨
+// 하지만 네이티브 네비게이션 바가 이미 표시되면 WebView는 그 아래에서 시작하므로
+// 추가 padding이 필요 없음 (중복 방지)
 function applySafeAreaInsets() {
     const app = document.getElementById('app');
     if (!app) return;
 
     try {
         const insets = SafeAreaInsets.get();
-        const totalTop = insets.top + NAVIGATION_BAR_HEIGHT;
-        app.style.setProperty('--safe-area-top', `${totalTop}px`);
-        console.log('SafeAreaInsets applied:', insets, 'Total top:', totalTop);
+        console.log('SafeAreaInsets raw value:', JSON.stringify(insets));
+
+        // 네이티브 네비게이션 바가 표시되는 경우 (granite.config의 navigationBar 설정)
+        // WebView는 이미 네비게이션 바 아래에서 시작하므로 top padding 불필요
+        // 단, 상태바(status bar) 영역은 WebView가 덮을 수 있으므로 확인 필요
+        // SDK 2.10.5+: SafeAreaInsets.top = 상태바 + 네비게이션바
+        // 네비게이션바가 네이티브로 표시되면 상태바만큼만 padding 필요
+        // 일반적으로 상태바는 24~44px, 네비게이션바는 44~56px
+        // 테스트: SafeAreaInsets.top이 너무 크면 (>60px) 네비게이션바 높이를 빼야 할 수 있음
+
+        // 임시 해결: SafeAreaInsets.top을 0으로 설정
+        // 네이티브 네비게이션 바가 이미 WebView 영역을 제한하고 있다면 padding 불필요
+        const effectiveTop = 0; // 네이티브 헤더가 이미 처리하므로 0
+        app.style.setProperty('--safe-area-top', `${effectiveTop}px`);
+        console.log('SafeAreaInsets applied: effectiveTop =', effectiveTop, '(raw top =', insets.top, ')');
     } catch (e) {
-        // fallback: 네비게이션 바 높이만 적용
-        app.style.setProperty('--safe-area-top', `${NAVIGATION_BAR_HEIGHT}px`);
+        // fallback: 0px (SDK가 없으면 safe area 없음)
+        app.style.setProperty('--safe-area-top', '0px');
         console.warn('SafeAreaInsets not available, using fallback:', e);
     }
 }
@@ -56,21 +67,11 @@ function applySafeAreaInsets() {
 // 초기 적용
 applySafeAreaInsets();
 
-// SafeArea 변경 시 동적 업데이트 (화면 회전 등)
-try {
-    SafeAreaInsets.subscribe({
-        onEvent: (insets) => {
-            const app = document.getElementById('app');
-            if (app) {
-                const totalTop = insets.top + NAVIGATION_BAR_HEIGHT;
-                app.style.setProperty('--safe-area-top', `${totalTop}px`);
-                console.log('SafeAreaInsets updated:', insets, 'Total top:', totalTop);
-            }
-        }
-    });
-} catch (e) {
-    console.warn('SafeAreaInsets.subscribe not available:', e);
-}
+// SafeArea 변경 구독 제거
+// 우리는 항상 effectiveTop = 0을 사용하므로 동적 업데이트가 필요 없음
+// SafeAreaInsets.subscribe를 제거하면 네비게이션 바 버튼 클릭 시
+// 불필요한 콜백 실행을 방지하여 성능 향상
+// (화면 회전 시에도 0을 사용하므로 문제 없음)
 
 // 앱인토스 플랫폼 마커는 index.html의 인라인 스크립트에서 설정됨
 // (iframe보다 먼저 실행되어야 하므로)
@@ -331,14 +332,17 @@ import('@apps-in-toss/web-framework').then(sdk => {
 // 전면 광고 (Interstitial Ad) 브릿지 함수
 // ========================================
 
-const AD_GROUP_ID = 'ait.v2.live.d042aa2a0f2a4b94';
+const AD_GROUP_ID = import.meta.env.VITE_AD_GROUP_ID_INTERSTITIAL || '';
 
 // 전면 광고 가용 여부 확인
 let interstitialAdAvailable = false;
 
-// SDK에서 전면 광고 API를 제공하는지 확인
-// isSupported()가 true를 반환해야만 광고 사용 가능 (더 엄격한 체크)
-if (typeof loadFullScreenAd === 'function' && typeof showFullScreenAd === 'function') {
+// 환경변수가 설정되지 않았으면 광고 비활성화
+if (!AD_GROUP_ID) {
+    console.log('Interstitial ad: AD_GROUP_ID not configured, disabling ads');
+} else if (typeof loadFullScreenAd === 'function' && typeof showFullScreenAd === 'function') {
+    // SDK에서 전면 광고 API를 제공하는지 확인
+    // isSupported()가 true를 반환해야만 광고 사용 가능 (더 엄격한 체크)
     if (typeof (loadFullScreenAd as any).isSupported === 'function') {
         interstitialAdAvailable = (loadFullScreenAd as any).isSupported();
         console.log('Interstitial ad isSupported():', interstitialAdAvailable);
@@ -409,6 +413,11 @@ function notifyAdComplete() {
 /**
  * 전면 광고 표시
  * 광고를 로드하고 표시함
+ *
+ * 타임아웃 구조 (3 에이전트 합의):
+ * - LOAD_TIMEOUT (8초): loadFullScreenAd 호출 후 'loaded' 이벤트까지
+ * - SHOW_TIMEOUT (5초): showFullScreenAd 호출 후 'show' 이벤트까지 (핵심 수정)
+ * - VIEWING_TIMEOUT (60초): 광고 표시 후 닫힘 이벤트까지 (SDK 버그 대비)
  */
 (window as any).__showInterstitialAd__ = (): void => {
     if (!interstitialAdAvailable) {
@@ -418,12 +427,12 @@ function notifyAdComplete() {
     }
 
     let completed = false;
+    let adShowing = false;  // 광고가 실제로 화면에 표시되었는지 추적
 
     const complete = () => {
         if (!completed) {
             completed = true;
             // Set timestamp for Java-side timeout fallback
-            // If JS callback fails, Java can detect ad completion via this timestamp
             try {
                 const gameFrame = document.getElementById('game-frame') as HTMLIFrameElement;
                 if (gameFrame && gameFrame.contentWindow) {
@@ -437,75 +446,108 @@ function notifyAdComplete() {
         }
     };
 
-    // 타임아웃 설정 (3초 후 자동 진행)
-    // 유저 경험 우선: 3초 내 로드 안 되면 광고 스킵하고 게임 진행
-    const timeout = setTimeout(() => {
-        console.warn('Interstitial ad timeout (3s) - continuing without ad');
-        complete();
-    }, 3000);
+    // 타임아웃 상수
+    const LOAD_TIMEOUT = 8000;     // 8초: 로드까지
+    const SHOW_TIMEOUT = 5000;     // 5초: show 이벤트까지 (핵심!)
+    const VIEWING_TIMEOUT = 60000; // 60초: 최대 시청 시간
 
-    // Maximum viewing timeout - safety net if SDK fails to fire close event
-    // Bug fix: SDK may show ad but never fire close event (dismissed/closed/completed)
-    // This causes the game to hang on black screen indefinitely
+    let loadTimeout: ReturnType<typeof setTimeout> | null = null;
+    let showTimeout: ReturnType<typeof setTimeout> | null = null;
     let viewingTimeout: ReturnType<typeof setTimeout> | null = null;
-    const MAX_VIEWING_TIME = 60000; // 60 seconds max viewing time
 
-    const clearAndComplete = () => {
-        clearTimeout(timeout);
+    const clearAllTimeouts = () => {
+        if (loadTimeout) clearTimeout(loadTimeout);
+        if (showTimeout) clearTimeout(showTimeout);
         if (viewingTimeout) clearTimeout(viewingTimeout);
-        complete();
     };
 
     const doShowAd = () => {
+        // show 이벤트 타임아웃 시작 - 광고가 실제로 나타날 때까지 대기
+        showTimeout = setTimeout(() => {
+            if (!adShowing) {
+                console.warn(`Interstitial ad: 'show' event not received within ${SHOW_TIMEOUT/1000}s - skipping ad`);
+                clearAllTimeouts();
+                complete();
+            }
+        }, SHOW_TIMEOUT);
+
         showFullScreenAd({
             options: { adGroupId: AD_GROUP_ID },
             onEvent: (showEvent) => {
                 console.log('Interstitial ad show event:', showEvent.type);
-                // 광고가 표시되면 로드 타임아웃 취소하고 최대 시청 타임아웃 설정
+
+                // 광고가 화면에 표시됨
                 if (showEvent.type === 'show' || showEvent.type === 'impression') {
-                    clearTimeout(timeout);
-                    // Set maximum viewing timeout as safety net
+                    adShowing = true;
+
+                    // show 타임아웃 취소 - 광고 표시됨
+                    if (showTimeout) {
+                        clearTimeout(showTimeout);
+                        showTimeout = null;
+                    }
+
+                    // viewing 타임아웃 설정 (SDK 버그 대비)
                     viewingTimeout = setTimeout(() => {
                         console.warn('Interstitial ad: max viewing time exceeded (60s) - continuing');
                         complete();
-                    }, MAX_VIEWING_TIME);
-                    console.log('Interstitial ad: load timeout cleared, max viewing timeout set');
+                    }, VIEWING_TIMEOUT);
+
+                    console.log('Interstitial ad: now visible, show timeout cleared, viewing timeout set');
                 }
-                // 모든 종료 이벤트 처리
+
+                // 광고 종료 이벤트
                 if (showEvent.type === 'dismissed' ||
                     showEvent.type === 'failedToShow' ||
                     showEvent.type === 'closed' ||
                     showEvent.type === 'completed') {
-                    if (viewingTimeout) clearTimeout(viewingTimeout);
+                    clearAllTimeouts();
                     complete();
                 }
             },
             onError: (err) => {
                 console.warn('Interstitial ad show error:', err);
-                clearAndComplete();
+                clearAllTimeouts();
+                complete();
             }
         });
     };
 
     try {
         console.log('Interstitial ad: loading...');
+
+        // 로드 타임아웃 설정
+        loadTimeout = setTimeout(() => {
+            if (!completed && !adShowing) {
+                console.warn(`Interstitial ad: load timeout (${LOAD_TIMEOUT/1000}s) - ad never loaded`);
+                clearAllTimeouts();
+                complete();
+            }
+        }, LOAD_TIMEOUT);
+
         loadFullScreenAd({
             options: { adGroupId: AD_GROUP_ID },
             onEvent: (event) => {
                 console.log('Interstitial ad load event:', event.type);
                 if (event.type === 'loaded') {
+                    // 로드 타임아웃 취소
+                    if (loadTimeout) {
+                        clearTimeout(loadTimeout);
+                        loadTimeout = null;
+                    }
                     console.log('Interstitial ad loaded, showing...');
                     doShowAd();
                 }
             },
             onError: (err) => {
                 console.warn('Interstitial ad load error:', err);
-                clearAndComplete();
+                clearAllTimeouts();
+                complete();
             }
         });
     } catch (e) {
         console.warn('Interstitial ad exception:', e);
-        clearAndComplete();
+        clearAllTimeouts();
+        complete();
     }
 };
 
@@ -525,9 +567,10 @@ TossAds.initialize({
 
 function loadBannerAd() {
     const bannerContainer = document.getElementById('banner-ad');
-    if (bannerContainer && TossAds.attachBanner.isSupported()) {
+    const bannerAdGroupId = import.meta.env.VITE_AD_GROUP_ID_BANNER || '';
+    if (bannerContainer && bannerAdGroupId && TossAds.attachBanner.isSupported()) {
         TossAds.attachBanner(
-            'ait.v2.live.d64a13be44724523',
+            bannerAdGroupId,
             bannerContainer,
             {
                 // 스타일 옵션
@@ -547,102 +590,53 @@ function loadBannerAd() {
     }
 }
 
-// 게임 iframe 높이 조정 (safe-area + 배너 높이 제외)
-function adjustGameHeight() {
-    const app = document.getElementById('app');
-    const banner = document.getElementById('banner-ad');
-    const gameContainer = document.getElementById('game-container');
-
-    if (app && banner && gameContainer) {
-        const safeAreaTop = parseInt(getComputedStyle(app).paddingTop) || 0;
-        const bannerHeight = banner.offsetHeight;
-        const windowHeight = window.innerHeight;
-        gameContainer.style.height = `${windowHeight - safeAreaTop - bannerHeight}px`;
-    }
-}
-
-// 초기 조정 및 리사이즈 이벤트 핸들러
-adjustGameHeight();
-window.addEventListener('resize', adjustGameHeight);
+// 게임 iframe 높이 조정은 CSS flexbox가 자동 처리함
+// adjustGameHeight() 제거됨 - flexbox (flex: 1)가 더 안정적
+// 이전 코드는 배너 광고 렌더링 전에 호출되어 높이 계산 오류 발생
 
 // ========================================
 // 종료 확인 모달 처리
 // ========================================
 
 /**
- * 종료 확인 모달이 현재 표시 중인지 확인
+ * 뒤로 버튼 처리 - 게임 iframe에 뒤로가기 이벤트 전달
+ * 게임 내에서 설정/인벤토리 등이 열려있으면 닫고,
+ * 메인 화면이면 무시 (종료는 네비게이션 바 X 버튼으로만)
  */
-function isExitModalVisible(): boolean {
-    const modal = document.getElementById('exit-modal');
-    return modal ? modal.classList.contains('visible') : false;
-}
+// backEvent 중복 처리 방지를 위한 디바운스
+let lastBackEventTime = 0;
+const BACK_EVENT_DEBOUNCE = 200; // 200ms 내 중복 이벤트 무시
 
-/**
- * 종료 확인 모달 표시
- */
-function showExitModal() {
-    const modal = document.getElementById('exit-modal');
-    if (modal) {
-        modal.classList.add('visible');
-        console.log('Exit modal shown');
-    }
-}
-
-/**
- * 종료 확인 모달 숨김
- */
-function hideExitModal() {
-    const modal = document.getElementById('exit-modal');
-    if (modal) {
-        modal.classList.remove('visible');
-        console.log('Exit modal hidden');
-    }
-}
-
-/**
- * 뒤로 버튼/X 버튼 처리
- * - 모달이 열려있으면 닫기
- * - 모달이 닫혀있으면 열기
- */
 function handleBackEvent() {
+    // 디바운스: 200ms 내 중복 backEvent 무시 (네비게이션 바 버튼이 여러 이벤트를 발생시킬 수 있음)
+    const now = Date.now();
+    if (now - lastBackEventTime < BACK_EVENT_DEBOUNCE) {
+        console.log('Back event ignored (debounce)');
+        return;
+    }
+    lastBackEventTime = now;
+
     console.log('Back event received');
-    if (isExitModalVisible()) {
-        hideExitModal();
-    } else {
-        showExitModal();
-    }
+
+    // 게임 iframe에 뒤로가기 이벤트 전달 (requestAnimationFrame으로 비동기 처리)
+    // 이렇게 하면 현재 이벤트 핸들러가 빠르게 완료되어 렌더링 블로킹을 방지
+    requestAnimationFrame(() => {
+        try {
+            const gameFrame = document.getElementById('game-frame') as HTMLIFrameElement;
+            if (gameFrame && gameFrame.contentWindow) {
+                const callback = (gameFrame.contentWindow as any).__onBackPressed__;
+                if (typeof callback === 'function') {
+                    callback();
+                    console.log('Back event forwarded to game iframe');
+                } else {
+                    console.log('Game iframe __onBackPressed__ not available - ignoring back event');
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to forward back event to game iframe:', e);
+        }
+    });
 }
-
-/**
- * 앱 종료 (closeView 호출)
- */
-async function exitApp() {
-    try {
-        console.log('Closing app...');
-        await closeView();
-    } catch (e) {
-        console.warn('Failed to close app:', e);
-    }
-}
-
-// 모달 버튼 이벤트 리스너 설정
-document.addEventListener('DOMContentLoaded', () => {
-    const cancelBtn = document.getElementById('exit-cancel');
-    const confirmBtn = document.getElementById('exit-confirm');
-
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', () => {
-            hideExitModal();
-        });
-    }
-
-    if (confirmBtn) {
-        confirmBtn.addEventListener('click', () => {
-            hideExitModal();
-            exitApp();
-        });
-    }
-});
 
 // 뒤로가기/X 버튼 이벤트 처리 (graniteEvent)
 // Android 뒤로 버튼 클릭 시 발생 (X 버튼은 별도 처리 필요할 수 있음)
@@ -691,6 +685,7 @@ import('@apps-in-toss/web-framework').then(sdk => {
                     console.warn('Back event error:', error);
                 }
             });
+            backEventRegistered = true;
             console.log('Back event listener registered (from dynamic import)');
         } catch (e) {
             console.warn('Failed to register back event via dynamic import:', e);
@@ -700,6 +695,3 @@ import('@apps-in-toss/web-framework').then(sdk => {
     // 이미 정적 import로 시도했으므로 무시
 });
 
-// 게임 iframe에서 종료 모달을 호출할 수 있도록 브릿지 함수 노출
-(window as any).__showExitModal__ = showExitModal;
-(window as any).__hideExitModal__ = hideExitModal;

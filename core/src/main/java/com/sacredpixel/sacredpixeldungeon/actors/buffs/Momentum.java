@@ -189,6 +189,7 @@ public class Momentum extends Buff implements ActionIndicator.Action {
 	private static final String STACKS =        "stacks";
 	private static final String FREERUN_TURNS = "freerun_turns";
 	private static final String FREERUN_CD =    "freerun_CD";
+	private static final String MOVED_LAST_TURN = "moved_last_turn";
 	
 	@Override
 	public void storeInBundle(Bundle bundle) {
@@ -196,6 +197,7 @@ public class Momentum extends Buff implements ActionIndicator.Action {
 		bundle.put(STACKS, momentumStacks);
 		bundle.put(FREERUN_TURNS, freerunTurns);
 		bundle.put(FREERUN_CD, freerunCooldown);
+		bundle.put(MOVED_LAST_TURN, movedLastTurn);
 	}
 	
 	@Override
@@ -207,7 +209,8 @@ public class Momentum extends Buff implements ActionIndicator.Action {
 		if (momentumStacks > 0 && freerunTurns <= 0){
 			ActionIndicator.setAction(this);
 		}
-		movedLastTurn = false;
+		// Default to true for backward compatibility: prevents stack decay on first turn after load
+		movedLastTurn = bundle.contains(MOVED_LAST_TURN) ? bundle.getBoolean(MOVED_LAST_TURN) : true;
 	}
 
 	@Override

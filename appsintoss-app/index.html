@@ -40,10 +40,13 @@
             width: 100%;
             height: 96px;
             min-height: 96px;
-            background-color: #1a1a1a;
+            background-color: #000;
             display: flex;
             align-items: center;
             justify-content: center;
+            /* GPU 가속: 모달 표시 시 깜빡임 방지를 위해 별도 레이어로 분리 */
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
 
         #game-frame {
@@ -52,93 +55,6 @@
             border: none;
         }
 
-        /* ========================================
-         * 종료 확인 모달 (앱인토스 샘플 디자인 참고)
-         * ======================================== */
-        .exit-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s ease, visibility 0.2s ease;
-        }
-
-        .exit-modal-overlay.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .exit-modal-box {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 28px 24px 24px 24px;
-            width: calc(100% - 48px);
-            max-width: 300px;
-            text-align: center;
-            transform: scale(0.95);
-            transition: transform 0.2s ease;
-        }
-
-        .exit-modal-overlay.visible .exit-modal-box {
-            transform: scale(1);
-        }
-
-        .exit-modal-message {
-            color: #191f28;
-            font-size: 17px;
-            font-weight: 600;
-            line-height: 1.4;
-            margin-bottom: 24px;
-        }
-
-        .exit-modal-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .exit-btn {
-            flex: 1;
-            height: 52px;
-            border-radius: 16px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.1s ease-in-out, opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
-            -webkit-tap-highlight-color: transparent;
-            outline: none;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        .exit-btn-cancel {
-            background: #f2f4f6;
-            border: 1px solid #e5e8eb;
-            color: #4e5968;
-        }
-
-        .exit-btn-cancel:active {
-            background: #e5e8eb;  /* 더 진한 회색 */
-            transform: scale(0.98);
-        }
-
-        .exit-btn-confirm {
-            background: #3182f6;  /* 토스 블루 */
-            border: none;
-            color: #ffffff;
-        }
-
-        .exit-btn-confirm:active {
-            opacity: 0.6;
-            transform: scale(0.98);
-        }
     </style>
     <!-- 앱인토스 플랫폼 마커 - iframe보다 먼저 설정되어야 함 -->
     <script>
@@ -156,17 +72,6 @@
         <!-- 게임 영역 -->
         <div id="game-container">
             <iframe id="game-frame" src="game/index.html" allow="fullscreen"></iframe>
-        </div>
-    </div>
-
-    <!-- 종료 확인 모달 -->
-    <div id="exit-modal" class="exit-modal-overlay" onclick="if(event.target === this) window.__hideExitModal__ && window.__hideExitModal__();">
-        <div class="exit-modal-box" onclick="event.stopPropagation();">
-            <p class="exit-modal-message">Sacred Pixel Dungeon을<br>종료할까요?</p>
-            <div class="exit-modal-buttons">
-                <button id="exit-cancel" class="exit-btn exit-btn-cancel">닫기</button>
-                <button id="exit-confirm" class="exit-btn exit-btn-confirm">종료하기</button>
-            </div>
         </div>
     </div>
 

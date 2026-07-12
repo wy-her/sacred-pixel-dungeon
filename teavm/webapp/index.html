@@ -95,6 +95,59 @@
             lastTouchEnd = now;
         }, false);
 
+        // --- Android back button handler (Cloudflare/PWA) ---
+        // Intercept browser back navigation and send ESC key to game instead.
+        // This provides consistent behavior between Cloudflare and Appsintoss builds.
+        //
+        // Uses Navigation API (modern browsers) with History API fallback.
+        // Navigation API: Chrome 102+, Firefox 147+, Samsung Internet 19+, Safari 26.2+
+        // Bug: Firefox Android's popstate doesn't respect pushState (bugzilla #1813755)
+        (function() {
+            var backHandled = false;
+
+            function handleBackButton() {
+                if (backHandled) return; // Prevent double-handling
+                backHandled = true;
+                setTimeout(function() { backHandled = false; }, 200);
+
+                // Trigger ESC key simulation via __onBackPressed__ (registered by TeaVMLauncher.java)
+                if (typeof window.__onBackPressed__ === 'function') {
+                    window.__onBackPressed__();
+                    console.log('Back button intercepted, ESC key simulated');
+                } else {
+                    console.log('Back button pressed but __onBackPressed__ not yet registered');
+                }
+            }
+
+            // Primary: Navigation API (works reliably on Firefox/Samsung Internet)
+            if (typeof navigation !== 'undefined' && navigation.addEventListener) {
+                navigation.addEventListener('navigate', function(e) {
+                    // Only intercept back/forward traversals within same document
+                    if (e.navigationType === 'traverse' && e.canIntercept) {
+                        e.intercept({
+                            handler: function() {
+                                handleBackButton();
+                                return Promise.resolve();
+                            }
+                        });
+                    }
+                });
+                console.log('Back button handler initialized (Navigation API)');
+            }
+            // Fallback: History API (for older browsers)
+            else {
+                // Push initial state so we can intercept the first back press
+                history.pushState({ spdGame: true }, '');
+
+                window.addEventListener('popstate', function(e) {
+                    // Re-push state to stay on the page
+                    history.pushState({ spdGame: true }, '');
+                    handleBackButton();
+                });
+                console.log('Back button handler initialized (History API fallback)');
+            }
+        })();
+
         // Global error handler
         window.onerror = function(msg, url, line, col, error) {
             // Suppress harmless audio errors from howler.js

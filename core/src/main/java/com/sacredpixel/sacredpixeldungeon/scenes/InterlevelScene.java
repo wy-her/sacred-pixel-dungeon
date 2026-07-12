@@ -28,6 +28,7 @@ import com.sacredpixel.sacredpixeldungeon.Assets;
 import com.sacredpixel.sacredpixeldungeon.Chrome;
 import com.sacredpixel.sacredpixeldungeon.Dungeon;
 import com.sacredpixel.sacredpixeldungeon.GamesInProgress;
+import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
 import com.sacredpixel.sacredpixeldungeon.SacredPixelDungeon;
 import com.sacredpixel.sacredpixeldungeon.SPDSettings;
 import com.sacredpixel.sacredpixeldungeon.Statistics;
@@ -141,7 +142,6 @@ public class InterlevelScene extends PixelScene {
 	private boolean waitingForMinTime = false;
 	private boolean storyFadingOut = false;
 	private boolean proceedCalled = false;  // Prevents duplicate proceedAfterLoading() calls
-	private float storyFadeOutTime = 0f;
 	private float btnContinueEnabledTime = 0f;  // Time since continue button was enabled
 	private static final float BTN_INPUT_DELAY = 0.5f;  // Delay before accepting input on continue button
 
@@ -160,7 +160,18 @@ public class InterlevelScene extends PixelScene {
 	private boolean bgFadingIn = false;      // Background fading in before story
 	private boolean bgFadingOut = false;     // Background fading out after story (to GameScene)
 	private boolean bgTransitioning = false; // Background crossfading (floor 1: ENTRANCE→SEWERS)
-	private float bgFadeTime = 0f;           // Tracks background fade progress
+
+	// Wall-clock based fade timing (immune to Game.elapsed variations after ads)
+	private long fadeStartTime = 0;          // System.currentTimeMillis() when current fade started
+
+	// Guard to ensure fade animations start from clean state
+	// Skips first frame after fade transition to force alpha=0 initialization
+	private boolean skipNextFadeFrame = false;
+
+	// Ad completion detection (Appsintoss only)
+	// If an ad was shown recently, skip all fade animations and show final state immediately
+	private boolean skipFadeAfterAd = false;  // True if ad was detected at scene start
+	private static final double AD_RECENT_THRESHOLD = 5000; // Ad shown within 5 seconds
 
 	public static int lastRegion = -1;
 
@@ -173,6 +184,18 @@ public class InterlevelScene extends PixelScene {
 	@Override
 	public void create() {
 		super.create();
+
+		// Detect if an ad was recently shown (within AD_RECENT_THRESHOLD)
+		// If so, skip all fade animations and show final state immediately
+		double adTimestamp = InterstitialAd.getAdCompletedTimestamp();
+		if (adTimestamp > 0) {
+			double elapsed = System.currentTimeMillis() - adTimestamp;
+			if (elapsed < AD_RECENT_THRESHOLD) {
+				skipFadeAfterAd = true;
+				// Clear the timestamp so subsequent scenes don't also skip
+				InterstitialAd.clearAdCompletedTimestamp();
+			}
+		}
 
 		String loadingAsset;
 		int loadingDepth;
@@ -194,7 +217,7 @@ public class InterlevelScene extends PixelScene {
 			case DESCEND:
 				if (Dungeon.hero == null){
 					loadingDepth = 1;
-					fadeTime = SLOW_FADE;
+					// fadeTime is set later based on loadingAsset selection
 					isNewFloor = true;
 					//Reset static depth tracker for new game
 					lastDepthWithStageClear = -1;
@@ -237,7 +260,8 @@ public class InterlevelScene extends PixelScene {
 			if (tutorialLevel || isTestLevelOnly || (mode == Mode.DESCEND && loadingDepth == 1)) {
 				loadingAsset = Assets.Splashes.ENTRANCE;
 				loadingCenter = 400; // center focus
-				fadeTime = SLOW_FADE;
+				// Use BG_FADE_DURATION for consistent fade speed with other story floors
+				fadeTime = BG_FADE_DURATION;
 			} else switch (lastRegion){
 				case 1:
 					loadingAsset = Assets.Splashes.SEWERS;
@@ -367,6 +391,11 @@ public class InterlevelScene extends PixelScene {
 			phase = Phase.STATIC;
 			if (background != null) background.alpha(0);
 			if (loadingText != null) loadingText.alpha(0);
+		} else if (skipFadeAfterAd) {
+			// Ad was shown - skip FADE_IN, show background at full alpha immediately
+			phase = Phase.STATIC;
+			if (background != null) background.alpha(1);
+			if (loadingText != null) loadingText.alpha(1);
 		} else {
 			phase = Phase.FADE_IN;
 		}
@@ -479,13 +508,15 @@ public class InterlevelScene extends PixelScene {
 		switch (phase) {
 		
 		case FADE_IN:
+			// Cap elapsed time to prevent instant jumps after ad
+			float fadeInCappedElapsed = Math.min(Game.elapsed, 0.05f);
 			float fadeInAlpha = Math.max(0, fadeTime - (timeLeft-BG_FADE_DURATION));
 			loadingText.alpha(fadeInAlpha);
 			// Only fade in background for non-story floors after region complete
 			if (exitAfterFadeIn) {
 				if (background != null) background.alpha(Math.min(1, fadeInAlpha));
 			}
-			if ((timeLeft -= Game.elapsed) <= 0) {
+			if ((timeLeft -= fadeInCappedElapsed) <= 0) {
 				if (storyCreatedForFadeIn) {
 					// Story floors 6,11,16,21: story elements already created
 					// Enable continue button like floor 1's afterLoading() does
@@ -533,7 +564,9 @@ public class InterlevelScene extends PixelScene {
 				storyBG.alpha(btnContinue.alpha()*0.8f);
 			}
 			
-			if ((timeLeft -= Game.elapsed) <= 0) {
+			// Cap elapsed time to prevent instant jumps after ad
+			float fadeOutCappedElapsed = Math.min(Game.elapsed, 0.05f);
+			if ((timeLeft -= fadeOutCappedElapsed) <= 0) {
 				Game.switchScene( GameScene.class );
 				KeyEvent.clearListeners(); //removes potential listener for continue
 				thread = null;
@@ -546,29 +579,52 @@ public class InterlevelScene extends PixelScene {
 			// Cap elapsed time to prevent instant jumps after ad (Game.elapsed can be huge)
 			float cappedElapsed = Math.min(Game.elapsed, 0.05f);
 
+			// === FIRST FRAME GUARD ===
+			// Skip first frame after fade transition to ensure clean alpha=0 initialization
+			// This guarantees the full fade animation plays from the beginning
+			if (skipNextFadeFrame) {
+				skipNextFadeFrame = false;
+				// Force all fading elements to start at alpha=0 and reset timing
+				if (bgFadingIn && background != null) {
+					background.alpha(0);
+					if (loadingText != null) loadingText.alpha(0);
+					fadeStartTime = System.currentTimeMillis();
+				}
+				if (textFadingIn && btnContinue != null) {
+					btnContinue.alpha(0);
+					if (storyMessage != null) storyMessage.alpha(0);
+					if (storyBG != null) storyBG.alpha(0);
+					fadeStartTime = System.currentTimeMillis();
+				}
+				break; // Skip fade processing this frame
+			}
+
 			// Track time since continue button was enabled for input delay
 			if (btnContinue != null && btnContinue.active) {
 				btnContinueEnabledTime += cappedElapsed;
 			}
 
 			// === BACKGROUND FADE-IN (before story) ===
+			// Uses wall-clock time for consistent fade regardless of Game.elapsed variations
 			if (bgFadingIn && background != null) {
-				bgFadeTime += cappedElapsed;
-				float bgAlpha = Math.min(1, bgFadeTime / BG_FADE_DURATION);
+				float elapsedSec = (System.currentTimeMillis() - fadeStartTime) / 1000f;
+				float bgAlpha = Math.min(1, elapsedSec / BG_FADE_DURATION);
 				background.alpha(bgAlpha);
 				if (loadingText != null) loadingText.alpha(bgAlpha);
 
 				if (bgAlpha >= 1) {
 					bgFadingIn = false;
-					bgFadeTime = 0f;
-					// Now start story fade-in
+					// Now start story fade-in with fresh timing
+					fadeStartTime = System.currentTimeMillis();
 					textFadingIn = true;
 				}
 			}
 
 			// === STORY FADE-IN ===
+			// Uses wall-clock time for consistent fade regardless of Game.elapsed variations
 			if (btnContinue != null && textFadingIn && !storyFadingOut && !bgFadingIn) {
-				float newAlpha = Math.min(1, btnContinue.alpha() + cappedElapsed / STORY_FADE_DURATION);
+				float elapsedSec = (System.currentTimeMillis() - fadeStartTime) / 1000f;
+				float newAlpha = Math.min(1, elapsedSec / STORY_FADE_DURATION);
 
 				btnContinue.alpha(newAlpha);
 				storyMessage.alpha(newAlpha);
@@ -580,16 +636,16 @@ public class InterlevelScene extends PixelScene {
 			}
 
 			// === STORY FADE-OUT ===
+			// Uses wall-clock time for consistent fade regardless of Game.elapsed variations
 			if (storyFadingOut && btnContinue != null && !bgFadingOut && !bgTransitioning) {
-				storyFadeOutTime += cappedElapsed;
-				float alpha = Math.max(0, 1f - storyFadeOutTime / STORY_FADE_DURATION);
+				float elapsedSec = (System.currentTimeMillis() - fadeStartTime) / 1000f;
+				float alpha = Math.max(0, 1f - elapsedSec / STORY_FADE_DURATION);
 				btnContinue.alpha(alpha);
 				storyMessage.alpha(alpha);
 				storyBG.alpha(alpha * 0.8f);
 
-				if (storyFadeOutTime >= STORY_FADE_DURATION) {
+				if (elapsedSec >= STORY_FADE_DURATION) {
 					storyFadingOut = false;
-					storyFadeOutTime = 0f;
 					// Remove old story elements
 					btnContinue.destroy();
 					storyMessage.destroy();
@@ -601,19 +657,20 @@ public class InterlevelScene extends PixelScene {
 					if (hasPendingSecondStory) {
 						// Floor 1: transition background from ENTRANCE to SEWERS
 						bgTransitioning = true;
-						bgFadeTime = 0f;
+						fadeStartTime = System.currentTimeMillis();
 					} else {
 						// Last story: fade out background then go to GameScene
 						bgFadingOut = true;
-						bgFadeTime = 0f;
+						fadeStartTime = System.currentTimeMillis();
 					}
 				}
 			}
 
 			// === BACKGROUND TRANSITION (Floor 1: ENTRANCE → SEWERS) ===
+			// Uses wall-clock time for consistent transition
 			if (bgTransitioning && background != null) {
-				bgFadeTime += cappedElapsed;
-				float progress = bgFadeTime / BG_FADE_DURATION;
+				float elapsedSec = (System.currentTimeMillis() - fadeStartTime) / 1000f;
+				float progress = elapsedSec / BG_FADE_DURATION;
 
 				if (progress < 1) {
 					// Fade out current background
@@ -621,7 +678,8 @@ public class InterlevelScene extends PixelScene {
 					if (loadingText != null) loadingText.alpha(1 - progress);
 				} else if (progress < 2) {
 					// Swap texture at midpoint and fade in
-					if (progress >= 1 && bgFadeTime - cappedElapsed < BG_FADE_DURATION) {
+					float prevProgress = (elapsedSec - 0.016f) / BG_FADE_DURATION; // ~1 frame ago
+					if (progress >= 1 && prevProgress < 1) {
 						// Just crossed the midpoint - swap texture
 						if (pendingSecondRegion == 1) {
 							background.texture(TextureCache.get(Assets.Splashes.SEWERS));
@@ -633,7 +691,6 @@ public class InterlevelScene extends PixelScene {
 				} else {
 					// Transition complete
 					bgTransitioning = false;
-					bgFadeTime = 0f;
 					hasPendingSecondStory = false;
 
 					// Create and show second story
@@ -645,22 +702,23 @@ public class InterlevelScene extends PixelScene {
 					if (storyBG != null) storyBG.visible = true;
 					if (storyMessage != null) storyMessage.visible = true;
 
-					// Start background fade-in for second story
+					// Start text fade-in for second story
 					background.alpha(1); // Background already faded in during transition
+					fadeStartTime = System.currentTimeMillis();
 					textFadingIn = true;  // Go directly to story fade-in
 				}
 			}
 
 			// === BACKGROUND FADE-OUT (to GameScene) ===
+			// Uses wall-clock time for consistent fade regardless of Game.elapsed variations
 			if (bgFadingOut && background != null) {
-				bgFadeTime += cappedElapsed;
-				float bgAlpha = Math.max(0, 1 - bgFadeTime / BG_FADE_DURATION);
+				float elapsedSec = (System.currentTimeMillis() - fadeStartTime) / 1000f;
+				float bgAlpha = Math.max(0, 1 - elapsedSec / BG_FADE_DURATION);
 				background.alpha(bgAlpha);
 				if (loadingText != null) loadingText.alpha(bgAlpha);
 
 				if (bgAlpha <= 0) {
 					bgFadingOut = false;
-					bgFadeTime = 0f;
 					// Background fade complete, go directly to GameScene
 					Game.switchScene(GameScene.class);
 					KeyEvent.clearListeners();
@@ -792,14 +850,29 @@ public class InterlevelScene extends PixelScene {
 	private void afterLoading(){
 		if (btnContinue != null){
 			// Floor 1 story: story already created, enable continue button
-			// Make all story elements visible for fade-in
+			// Make all story elements visible
 			btnContinue.visible = true;
 			btnContinue.enable(true);
 			btnContinueEnabledTime = 0f;  // Reset timer for input delay
-			btnContinue.alpha(0);  // Start at 0, will fade in during STATIC phase
 			if (storyBG != null) storyBG.visible = true;
 			if (storyMessage != null) storyMessage.visible = true;
-			textFadingIn = true;   // Enable fade-in animation for story elements
+
+			if (skipFadeAfterAd) {
+				// Ad was shown - skip fade animation, show final state immediately
+				btnContinue.alpha(1);
+				if (storyBG != null) storyBG.alpha(0.8f);
+				if (storyMessage != null) storyMessage.alpha(1);
+				if (background != null) background.alpha(1);
+				if (loadingText != null) loadingText.alpha(1);
+				textFadingIn = false;  // No fade needed
+			} else {
+				// Normal flow - fade in
+				btnContinue.alpha(0);  // Start at 0, will fade in during STATIC phase
+				// Use wall-clock time for consistent fade regardless of Game.elapsed variations
+				fadeStartTime = System.currentTimeMillis();
+				textFadingIn = true;   // Enable fade-in animation for story elements
+				skipNextFadeFrame = true;  // Ensure first frame resets timing
+			}
 			phase = Phase.STATIC;
 		} else if (isStoryFloor && isNewFloor && mode == Mode.DESCEND && Dungeon.hero != null) {
 			// Story floors 6,11,16,21: show WndRegionComplete first, then story
@@ -818,7 +891,7 @@ public class InterlevelScene extends PixelScene {
 
 	private void startStoryFadeOut() {
 		storyFadingOut = true;
-		storyFadeOutTime = 0f;
+		fadeStartTime = System.currentTimeMillis();  // Use wall-clock time
 	}
 
 	private void proceedAfterLoading() {
@@ -873,33 +946,46 @@ public class InterlevelScene extends PixelScene {
 	// Proceeds to story display or GameScene
 	private void proceedToStory() {
 		if (isStoryFloor) {
-			// Restore background visibility but start with alpha 0 for smooth fade-in
+			// Restore background visibility
 			if (background != null) {
 				background.visible = true;
-				background.alpha(0);
 			}
 			if (loadingText != null) {
 				loadingText.visible = true;
-				loadingText.alpha(0);
 			}
 
 			// Create story elements (same as floor 1 in create())
 			createStoryElements(storyRegion);
 
-			// Follow exact same pattern as floor 1's afterLoading()
+			// Make story elements visible
 			if (btnContinue != null) {
 				btnContinue.visible = true;
 				btnContinue.enable(true);
 				btnContinueEnabledTime = 0f;  // Reset timer for input delay
-				btnContinue.alpha(0);  // Start at 0, fade-in via STATIC phase
 			}
 			if (storyBG != null) storyBG.visible = true;
 			if (storyMessage != null) storyMessage.visible = true;
 
-			// Start with background fade-in, then story fade-in
-			bgFadingIn = true;
-			bgFadeTime = 0f;
-			textFadingIn = false;  // Will be set true after bgFadingIn completes
+			if (skipFadeAfterAd) {
+				// Ad was shown - skip fade animation, show final state immediately
+				if (background != null) background.alpha(1);
+				if (loadingText != null) loadingText.alpha(1);
+				if (btnContinue != null) btnContinue.alpha(1);
+				if (storyBG != null) storyBG.alpha(0.8f);
+				if (storyMessage != null) storyMessage.alpha(1);
+				bgFadingIn = false;
+				textFadingIn = false;
+			} else {
+				// Normal flow - start with alpha 0 for fade-in
+				if (background != null) background.alpha(0);
+				if (loadingText != null) loadingText.alpha(0);
+				if (btnContinue != null) btnContinue.alpha(0);
+				// Start with background fade-in, then story fade-in
+				fadeStartTime = System.currentTimeMillis();
+				textFadingIn = false;  // Will be set true after bgFadingIn completes
+				bgFadingIn = true;     // Set fade flag BEFORE phase change
+				skipNextFadeFrame = true;  // Ensure first frame resets timing
+			}
 			phase = Phase.STATIC;
 		} else {
 			// Non-story floor (26) - keep black background, use SLOW_FADE for dramatic effect

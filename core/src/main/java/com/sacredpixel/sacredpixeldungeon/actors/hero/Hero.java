@@ -306,6 +306,7 @@ public class Hero extends Char {
 	private static final String LEVEL		= "lvl";
 	private static final String EXPERIENCE	= "exp";
 	private static final String HTBOOST     = "htboost";
+	private static final String READY       = "ready";
 	
 	@Override
 	public void storeInBundle( Bundle bundle ) {
@@ -328,6 +329,7 @@ public class Hero extends Char {
 		bundle.put( HTBOOST, HTBoost );
 
 		bundle.put( TAG_SHLD, shielding() );
+		bundle.put( READY, ready );
 
 		belongings.storeInBundle( bundle );
 	}
@@ -353,6 +355,9 @@ public class Hero extends Char {
 		STR = bundle.getInt( STRENGTH );
 
 		belongings.restoreFromBundle( bundle );
+
+		// Restore ready state; default false for backward compatibility
+		ready = bundle.contains(READY) ? bundle.getBoolean(READY) : false;
 	}
 	
 	public static void preview( GamesInProgress.Info info, Bundle bundle ) {

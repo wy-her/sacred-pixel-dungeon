@@ -8,6 +8,9 @@ export default defineConfig({
     primaryColor: '#FFD700',
   },
   permissions: [],
+  navigationBar: {
+    theme: 'dark',
+  },
   web: {
     host: 'localhost',
     port: 5173,
