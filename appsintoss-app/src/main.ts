@@ -605,10 +605,10 @@ function loadBannerAd() {
  */
 // backEvent 중복 처리 방지를 위한 디바운스
 let lastBackEventTime = 0;
-const BACK_EVENT_DEBOUNCE = 200; // 200ms 내 중복 이벤트 무시
+const BACK_EVENT_DEBOUNCE = 300; // 300ms 내 중복 이벤트 무시
 
 function handleBackEvent() {
-    // 디바운스: 200ms 내 중복 backEvent 무시 (네비게이션 바 버튼이 여러 이벤트를 발생시킬 수 있음)
+    // 디바운스: 300ms 내 중복 backEvent 무시 (네비게이션 바 버튼이 여러 이벤트를 발생시킬 수 있음)
     const now = Date.now();
     if (now - lastBackEventTime < BACK_EVENT_DEBOUNCE) {
         console.log('Back event ignored (debounce)');

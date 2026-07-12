@@ -11,15 +11,13 @@ Firefox Android의 알려진 버그 ([bugzilla #1813755](https://bugzilla.mozill
 
 Samsung Internet도 유사한 동작을 보임.
 
-## 수정 내용
-**Navigation API**를 우선 사용하고, History API를 폴백으로 유지하는 방식으로 변경했습니다.
+## 수정 내용 (v1 → v2)
 
-### Navigation API 지원 현황
-- Chrome 102+
-- Firefox 147+
-- Samsung Internet 19+
-- Safari 26.2+
-- 전역 지원율: 87.37%
+### v1 (초기 수정)
+Navigation API를 우선 사용하고, History API를 폴백으로 유지. 그러나 **Navigation API 브랜치에서 `history.pushState`를 하지 않아서** Edge, Chrome에서도 뒤로 버튼이 작동하지 않는 문제 발생.
+
+### v2 (최종 수정)
+**항상 `history.pushState` 실행** + Navigation API와 popstate 모두 등록하는 방식으로 변경.
 
 ### teavm/webapp/index.html
 
@@ -37,12 +35,16 @@ Samsung Internet도 유사한 동작을 보임.
         }
     }
 
-    // Primary: Navigation API (Firefox/Samsung Internet에서 안정적으로 작동)
+    // 항상 초기 히스토리 상태 push - 뒤로 갈 곳이 있어야 intercept 가능
+    history.pushState({ spdGame: true }, '');
+
+    // Navigation API (Chrome 102+, Edge, etc.)
     if (typeof navigation !== 'undefined' && navigation.addEventListener) {
         navigation.addEventListener('navigate', function(e) {
             if (e.navigationType === 'traverse' && e.canIntercept) {
                 e.intercept({
                     handler: function() {
+                        history.pushState({ spdGame: true }, ''); // re-push for next back
                         handleBackButton();
                         return Promise.resolve();
                     }
@@ -50,24 +52,33 @@ Samsung Internet도 유사한 동작을 보임.
             }
         });
     }
-    // Fallback: History API (구형 브라우저용)
-    else {
+
+    // popstate 항상 등록 (Firefox, Samsung Internet, 구형 브라우저)
+    // Navigation API가 intercept 성공하면 popstate는 발생하지 않음
+    window.addEventListener('popstate', function(e) {
         history.pushState({ spdGame: true }, '');
-        window.addEventListener('popstate', function(e) {
-            history.pushState({ spdGame: true }, '');
-            handleBackButton();
-        });
-    }
+        handleBackButton();
+    });
 })();
 ```
 
+## 핵심 변경점
+
+| 항목 | v1 | v2 |
+|------|----|----|
+| 초기 pushState | Navigation API 없을 때만 | **항상 실행** |
+| intercept 후 re-push | 없음 | **있음** |
+| popstate 리스너 | Navigation API 없을 때만 | **항상 등록** |
+
 ## 기술적 세부사항
-- 파일: `teavm/webapp/index.html`
-- Navigation API의 `navigate` 이벤트는 `popstate`와 달리 traversal(뒤로/앞으로) 탐색을 안정적으로 인터셉트
-- `e.canIntercept` 체크로 인터셉트 가능한 경우에만 처리
-- 중복 처리 방지를 위한 200ms 디바운스 적용
+- 파일: `teavm/webapp/index.html` (Cloudflare 버전)
+- 파일: `appsintoss-app/src/main.ts` (앱인토스 버전)
+- Navigation API의 `navigate` 이벤트는 히스토리 스택에 항목이 있어야 traverse로 인식
+- 중복 처리 방지를 위한 300ms 디바운스
+  - Cloudflare: `backHandled` 플래그 (index.html)
+  - 앱인토스: `BACK_EVENT_DEBOUNCE` 상수 (main.ts)
 
 ## 영향
-- Samsung Internet, Firefox에서 뒤로 버튼이 ESC 키로 정상 매핑됨
-- 기존 Chrome, Edge 동작 유지
-- 구형 브라우저에서는 기존 History API 방식으로 폴백
+- 모든 브라우저(Chrome, Edge, Firefox, Samsung Internet)에서 뒤로 버튼이 ESC 키로 정상 매핑됨
+- Navigation API 지원 여부와 관계없이 안정적으로 동작
+- 앱인토스 `backEvent` 이중 발생 문제 완화

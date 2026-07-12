@@ -108,7 +108,6 @@ public class WndGame extends Window {
 				Game.switchScene(TitleScene.class);
 			}
 		});
-		if (SPDSettings.intro()) curBtn.enable(false);
 
 		resize( WIDTH, pos );
 	}

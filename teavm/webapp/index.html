@@ -99,16 +99,16 @@
         // Intercept browser back navigation and send ESC key to game instead.
         // This provides consistent behavior between Cloudflare and Appsintoss builds.
         //
-        // Uses Navigation API (modern browsers) with History API fallback.
-        // Navigation API: Chrome 102+, Firefox 147+, Samsung Internet 19+, Safari 26.2+
-        // Bug: Firefox Android's popstate doesn't respect pushState (bugzilla #1813755)
+        // Strategy: Always push history state + use both Navigation API and popstate.
+        // Navigation API alone doesn't work because it doesn't create history entries.
+        // We need pushState to create something to "go back" to.
         (function() {
             var backHandled = false;
 
             function handleBackButton() {
                 if (backHandled) return; // Prevent double-handling
                 backHandled = true;
-                setTimeout(function() { backHandled = false; }, 200);
+                setTimeout(function() { backHandled = false; }, 300);
 
                 // Trigger ESC key simulation via __onBackPressed__ (registered by TeaVMLauncher.java)
                 if (typeof window.__onBackPressed__ === 'function') {
@@ -119,33 +119,35 @@
                 }
             }
 
-            // Primary: Navigation API (works reliably on Firefox/Samsung Internet)
+            // Always push initial state so there's something to "go back" to
+            history.pushState({ spdGame: true }, '');
+
+            // Navigation API (Chrome 102+, Edge, etc.) - intercepts before popstate
             if (typeof navigation !== 'undefined' && navigation.addEventListener) {
                 navigation.addEventListener('navigate', function(e) {
-                    // Only intercept back/forward traversals within same document
                     if (e.navigationType === 'traverse' && e.canIntercept) {
                         e.intercept({
                             handler: function() {
+                                // Re-push state for next back press
+                                history.pushState({ spdGame: true }, '');
                                 handleBackButton();
                                 return Promise.resolve();
                             }
                         });
                     }
                 });
-                console.log('Back button handler initialized (Navigation API)');
+                console.log('Back button: Navigation API active');
             }
-            // Fallback: History API (for older browsers)
-            else {
-                // Push initial state so we can intercept the first back press
-                history.pushState({ spdGame: true }, '');
 
-                window.addEventListener('popstate', function(e) {
-                    // Re-push state to stay on the page
-                    history.pushState({ spdGame: true }, '');
-                    handleBackButton();
-                });
-                console.log('Back button handler initialized (History API fallback)');
-            }
+            // Always add popstate as fallback (Firefox, Samsung Internet, older browsers)
+            // If Navigation API intercepts successfully, popstate won't fire.
+            // If Navigation API fails or isn't supported, popstate handles it.
+            window.addEventListener('popstate', function(e) {
+                // Re-push state for next back press
+                history.pushState({ spdGame: true }, '');
+                handleBackButton();
+            });
+            console.log('Back button: popstate listener active');
         })();
 
         // Global error handler
