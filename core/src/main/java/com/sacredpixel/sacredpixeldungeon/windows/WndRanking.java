@@ -57,6 +57,7 @@ import com.sacredpixel.sacredpixeldungeon.ui.RenderedTextBlock;
 import com.sacredpixel.sacredpixeldungeon.ui.TalentButton;
 import com.sacredpixel.sacredpixeldungeon.ui.TalentsPane;
 import com.sacredpixel.sacredpixeldungeon.ui.Window;
+import com.sacredpixel.sacredpixeldungeon.ui.ActionIndicator;
 import com.sacredpixel.sacredpixeldungeon.utils.DungeonSeed;
 import com.watabou.noosa.ColorBlock;
 import com.watabou.noosa.Game;
@@ -553,6 +554,8 @@ public class WndRanking extends WndTabbed {
 												// Initialize seed from SPDSettings BEFORE switching scene
 												Dungeon.initSeed();
 
+												// Clear any lingering action from previous game (e.g., MonkEnergy)
+												ActionIndicator.clearAction();
 												InterlevelScene.mode = InterlevelScene.Mode.DESCEND;
 												WndRanking.this.hide();
 												SacredPixelDungeon.switchNoFade(InterlevelScene.class);
@@ -569,6 +572,8 @@ public class WndRanking extends WndTabbed {
 										// Initialize seed from SPDSettings BEFORE switching scene
 										Dungeon.initSeed();
 
+										// Clear any lingering action from previous game (e.g., MonkEnergy)
+										ActionIndicator.clearAction();
 										InterlevelScene.mode = InterlevelScene.Mode.DESCEND;
 										WndRanking.this.hide();
 										SacredPixelDungeon.switchNoFade(InterlevelScene.class);

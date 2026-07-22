@@ -120,7 +120,9 @@ public class BeamingRay extends TargetedClericSpell {
 		if (Char.hasProp(ally, Char.Property.IMMOVABLE)){
 			range /= 2;
 		}
-		if (Dungeon.level.distance(ally.pos, telePos) > range){
+		// Stasis ally is not on the map, so use hero position for distance check
+		int distanceFrom = (ally == Stasis.getStasisAlly()) ? hero.pos : ally.pos;
+		if (Dungeon.level.distance(distanceFrom, telePos) > range){
 			GLog.w(Messages.get(this, "out_of_range"));
 			return;
 		}

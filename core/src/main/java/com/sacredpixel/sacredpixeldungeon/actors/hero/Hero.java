@@ -1293,6 +1293,11 @@ public class Hero extends Char {
 	private boolean actMine(HeroAction.Mine action){
 		if (Dungeon.level.adjacent(pos, action.dst)){
 			path = null;
+
+			// Sync Momentum timing BEFORE starting animation to prevent decay
+			Momentum momentum = buff(Momentum.class);
+			if (momentum != null) momentum.onNonMovementAction();
+
 			if ((Dungeon.level.map[action.dst] == Terrain.WALL
 					|| Dungeon.level.map[action.dst] == Terrain.WALL_DECO
 					|| Dungeon.level.map[action.dst] == Terrain.MINE_CRYSTAL
@@ -1419,6 +1424,8 @@ public class Hero extends Char {
 		} else if (!Dungeon.level.locked && transition != null && transition.inside(pos)) {
 
 			if (Dungeon.level.activateTransition(this, transition)){
+				Momentum momentum = buff(Momentum.class);
+				if (momentum != null) momentum.onNonMovementAction();
 				curAction = null;
 			} else {
 				ready();

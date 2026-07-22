@@ -24,12 +24,14 @@
 
 package com.sacredpixel.sacredpixeldungeon.scenes;
 
+import com.badlogic.gdx.Input;
 import com.sacredpixel.sacredpixeldungeon.Assets;
 import com.sacredpixel.sacredpixeldungeon.Chrome;
 import com.sacredpixel.sacredpixeldungeon.Dungeon;
 import com.sacredpixel.sacredpixeldungeon.GamesInProgress;
 import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
 import com.sacredpixel.sacredpixeldungeon.SacredPixelDungeon;
+import com.sacredpixel.sacredpixeldungeon.SPDAction;
 import com.sacredpixel.sacredpixeldungeon.SPDSettings;
 import com.sacredpixel.sacredpixeldungeon.Statistics;
 import com.sacredpixel.sacredpixeldungeon.actors.Actor;
@@ -59,6 +61,7 @@ import com.sacredpixel.sacredpixeldungeon.windows.WndError;
 import com.sacredpixel.sacredpixeldungeon.windows.WndOptions;
 import com.sacredpixel.sacredpixeldungeon.windows.WndRegionComplete;
 import com.watabou.gltextures.TextureCache;
+import com.watabou.input.KeyBindings;
 import com.watabou.input.KeyEvent;
 import com.watabou.noosa.Camera;
 import com.watabou.noosa.ColorBlock;
@@ -831,11 +834,21 @@ public class InterlevelScene extends PixelScene {
 			@Override
 			public boolean onSignal(KeyEvent keyEvent) {
 				// Require minimum delay after button is enabled to prevent accidental dismissal
+				// Only accept specific keys: Enter, Space, or BACK action (ESC/Android back)
+				// This prevents accidental story dismissal from unexpected key events
 				if (!keyEvent.pressed && btnContinue.active && btnContinueEnabledTime >= BTN_INPUT_DELAY){
-					btnContinue.enable(false);
-					KeyEvent.removeKeyListener(this);
-					startStoryFadeOut();
-					return true;
+					int key = keyEvent.code;
+					boolean isAcceptedKey = key == Input.Keys.ENTER
+							|| key == Input.Keys.NUMPAD_ENTER
+							|| key == Input.Keys.SPACE
+							|| KeyBindings.getActionForKey(keyEvent) == SPDAction.BACK;
+
+					if (isAcceptedKey) {
+						btnContinue.enable(false);
+						KeyEvent.removeKeyListener(this);
+						startStoryFadeOut();
+						return true;
+					}
 				}
 				return false;
 			}

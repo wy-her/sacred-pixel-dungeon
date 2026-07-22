@@ -92,11 +92,9 @@ public class LayOnHands extends TargetedClericSpell {
 		affectChar(hero, ch);
 
 		if (ch == hero){
-			hero.spend(1f);
 			hero.sprite.operate(ch.pos);
 			hero.next();
 		} else {
-			hero.spend(1f);
 			hero.sprite.zap(ch.pos);
 			hero.next();
 		}

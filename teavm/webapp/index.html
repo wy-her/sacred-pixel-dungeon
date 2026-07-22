@@ -95,61 +95,6 @@
             lastTouchEnd = now;
         }, false);
 
-        // --- Android back button handler (Cloudflare/PWA) ---
-        // Intercept browser back navigation and send ESC key to game instead.
-        // This provides consistent behavior between Cloudflare and Appsintoss builds.
-        //
-        // Strategy: Always push history state + use both Navigation API and popstate.
-        // Navigation API alone doesn't work because it doesn't create history entries.
-        // We need pushState to create something to "go back" to.
-        (function() {
-            var backHandled = false;
-
-            function handleBackButton() {
-                if (backHandled) return; // Prevent double-handling
-                backHandled = true;
-                setTimeout(function() { backHandled = false; }, 300);
-
-                // Trigger ESC key simulation via __onBackPressed__ (registered by TeaVMLauncher.java)
-                if (typeof window.__onBackPressed__ === 'function') {
-                    window.__onBackPressed__();
-                    console.log('Back button intercepted, ESC key simulated');
-                } else {
-                    console.log('Back button pressed but __onBackPressed__ not yet registered');
-                }
-            }
-
-            // Always push initial state so there's something to "go back" to
-            history.pushState({ spdGame: true }, '');
-
-            // Navigation API (Chrome 102+, Edge, etc.) - intercepts before popstate
-            if (typeof navigation !== 'undefined' && navigation.addEventListener) {
-                navigation.addEventListener('navigate', function(e) {
-                    if (e.navigationType === 'traverse' && e.canIntercept) {
-                        e.intercept({
-                            handler: function() {
-                                // Re-push state for next back press
-                                history.pushState({ spdGame: true }, '');
-                                handleBackButton();
-                                return Promise.resolve();
-                            }
-                        });
-                    }
-                });
-                console.log('Back button: Navigation API active');
-            }
-
-            // Always add popstate as fallback (Firefox, Samsung Internet, older browsers)
-            // If Navigation API intercepts successfully, popstate won't fire.
-            // If Navigation API fails or isn't supported, popstate handles it.
-            window.addEventListener('popstate', function(e) {
-                // Re-push state for next back press
-                history.pushState({ spdGame: true }, '');
-                handleBackButton();
-            });
-            console.log('Back button: popstate listener active');
-        })();
-
         // Global error handler
         window.onerror = function(msg, url, line, col, error) {
             // Suppress harmless audio errors from howler.js

@@ -105,6 +105,18 @@ public class Momentum extends Buff implements ActionIndicator.Action {
 		}
 	}
 
+	/**
+	 * Called when hero performs a non-movement action that should prevent momentum decay.
+	 * Unlike gainStack(), this does NOT add stacks - only prevents decay and syncs timing.
+	 * Used for actions like Mining, Ladder climbing, and Beacon usage.
+	 */
+	public void onNonMovementAction(){
+		movedLastTurn = true;
+		if (freerunCooldown <= 0 && !freerunning()){
+			postpone(target.cooldown()+(1/target.speed()));
+		}
+	}
+
 	public boolean freerunning(){
 		return freerunTurns > 0;
 	}

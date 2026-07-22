@@ -35,6 +35,7 @@ import com.sacredpixel.sacredpixeldungeon.actors.hero.Talent;
 import com.sacredpixel.sacredpixeldungeon.actors.hero.abilities.huntress.NaturesPower;
 import com.sacredpixel.sacredpixeldungeon.effects.Splash;
 import com.sacredpixel.sacredpixeldungeon.effects.particles.LeafParticle;
+import com.sacredpixel.sacredpixeldungeon.items.Item;
 import com.sacredpixel.sacredpixeldungeon.items.rings.RingOfSharpshooting;
 import com.sacredpixel.sacredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.sacredpixel.sacredpixeldungeon.messages.Messages;
@@ -303,6 +304,16 @@ public class SpiritBow extends Weapon {
 		}
 
 		@Override
+		public ArrayList<String> actions(Hero hero) {
+			return new ArrayList<>();
+		}
+
+		@Override
+		public String defaultAction() {
+			return null;
+		}
+
+		@Override
 		public int defaultQuantity() {
 			return 1;
 		}
@@ -371,6 +382,11 @@ public class SpiritBow extends Weapon {
 		@Override
 		public void throwSound() {
 			Sample.INSTANCE.play( Assets.Sounds.ATK_SPIRITBOW, 1, Random.Float(0.87f, 1.15f) );
+		}
+
+		@Override
+		public Item split(int amount) {
+			return null;
 		}
 
 		int flurryCount = -1;

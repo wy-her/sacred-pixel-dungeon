@@ -30,6 +30,7 @@ import com.sacredpixel.sacredpixeldungeon.actors.Actor;
 import com.sacredpixel.sacredpixeldungeon.actors.Char;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Buff;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Invisibility;
+import com.sacredpixel.sacredpixeldungeon.actors.buffs.Momentum;
 import com.sacredpixel.sacredpixeldungeon.actors.hero.Hero;
 import com.sacredpixel.sacredpixeldungeon.actors.hero.Talent;
 import com.sacredpixel.sacredpixeldungeon.effects.Pushing;
@@ -132,7 +133,9 @@ public class BeaconOfReturning extends Spell {
 		tracker.returnPos = hero.pos;
 
 		Notes.add(Notes.Landmark.BEACON_LOCATION, tracker.returnDepth);
-		
+
+		Momentum momentum = hero.buff(Momentum.class);
+		if (momentum != null) momentum.onNonMovementAction();
 		hero.spend( 1f );
 		hero.busy();
 		
@@ -188,6 +191,8 @@ public class BeaconOfReturning extends Spell {
 			}
 
 			if (ScrollOfTeleportation.teleportToLocation(hero, tracker.returnPos)){
+				Momentum momentum = hero.buff(Momentum.class);
+				if (momentum != null) momentum.onNonMovementAction();
 				hero.spendAndNext( 1f );
 			} else {
 				return;

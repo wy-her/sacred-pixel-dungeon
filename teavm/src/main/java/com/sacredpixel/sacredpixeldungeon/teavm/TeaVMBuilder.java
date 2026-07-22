@@ -97,7 +97,7 @@ public class TeaVMBuilder {
             File preloadFile = new File(webappDir, "assets/preload.txt");
             if (preloadFile.exists()) {
                 String content = new String(java.nio.file.Files.readAllBytes(preloadFile.toPath()));
-                content = content.replaceAll("(i:b:music/[^:]+:[^:]+):1", "$1:0");
+                content = content.replaceAll("(i:b:/music/[^:]+:[^:]+):1", "$1:0");
                 java.nio.file.Files.write(preloadFile.toPath(), content.getBytes());
                 System.out.println("Disabled preloading for music files in preload.txt");
             }

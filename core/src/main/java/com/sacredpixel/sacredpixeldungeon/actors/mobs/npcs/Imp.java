@@ -32,6 +32,7 @@ import com.sacredpixel.sacredpixeldungeon.actors.buffs.Buff;
 import com.sacredpixel.sacredpixeldungeon.actors.mobs.Mob;
 import com.sacredpixel.sacredpixeldungeon.actors.mobs.Senior;
 import com.sacredpixel.sacredpixeldungeon.items.scrolls.ScrollOfTeleportation;
+import com.watabou.utils.PathFinder;
 import com.sacredpixel.sacredpixeldungeon.utils.GLog;
 import com.sacredpixel.sacredpixeldungeon.items.Generator;
 import com.sacredpixel.sacredpixeldungeon.items.quest.DwarfToken;
@@ -231,14 +232,29 @@ public class Imp extends NPC {
 		public static void spawnSeniorMonks() {
 			questDepth = Dungeon.depth;
 
+			// Find Imp's position on this level
+			int impPos = -1;
+			for (Mob mob : Dungeon.level.mobs) {
+				if (mob instanceof Imp) {
+					impPos = mob.pos;
+					break;
+				}
+			}
+
+			// Build distance map from Imp's position to find reachable cells
+			if (impPos != -1) {
+				PathFinder.buildDistanceMap(impPos, Dungeon.level.passable);
+			}
+
 			ArrayList<Integer> candidates = new ArrayList<>();
 
-			// Find valid spawn positions (passable cells not occupied)
+			// Find valid spawn positions (passable, not occupied, reachable from Imp)
 			for (int i = 0; i < Dungeon.level.length(); i++) {
 				if (Dungeon.level.passable[i]
 						&& Dungeon.level.findMob(i) == null
 						&& i != Dungeon.hero.pos
-						&& Dungeon.level.distance(i, Dungeon.hero.pos) > 4) {
+						&& Dungeon.level.distance(i, Dungeon.hero.pos) > 4
+						&& (impPos == -1 || PathFinder.distance[i] != Integer.MAX_VALUE)) {
 					candidates.add(i);
 				}
 			}
@@ -254,6 +270,10 @@ public class Imp extends NPC {
 				senior.state = senior.WANDERING;
 				GameScene.add(senior);
 				ScrollOfTeleportation.appear(senior, pos);
+				// Beckon towards Imp so they move in that direction
+				if (impPos != -1) {
+					senior.beckon(impPos);
+				}
 			}
 
 			// Notify the player

@@ -110,9 +110,10 @@ public class AttackIndicator extends Tag {
 
 			if (Dungeon.hero.isAlive()) {
 
-				//re-check if the current target is still within attack range
-				//this handles enemies that move out of range between updateState() calls
-				if (lastTarget != null && !Dungeon.hero.canAttack(lastTarget)) {
+				//re-check if the current target is still within attack range or field of view
+				//this handles enemies that move out of range or out of sight between updateState() calls
+				if (lastTarget != null &&
+						(!Dungeon.hero.canAttack(lastTarget) || !Dungeon.level.heroFOV[lastTarget.pos])) {
 					checkEnemies();
 				}
 
