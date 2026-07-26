@@ -67,10 +67,16 @@ public class Button extends Component implements Focusable {
 				if (!isInsideWindow() && hasOpenWindowInScene()) {
 					return;
 				}
-				pressedButton = Button.this;
-				pressTime = 0;
-				clickReady = true;
+				// 시각적 피드백은 항상 허용
 				Button.this.onPointerDown();
+
+				// 클릭 처리는 첫 번째 버튼만 (이미 눌린 버튼이 없을 때만)
+				// pressedButton이 다른 버튼에 의해 탈취되는 것을 방지
+				if (pressedButton == null) {
+					pressedButton = Button.this;
+					pressTime = 0;
+					clickReady = true;
+				}
 			}
 			@Override
 			protected void onPointerUp( PointerEvent event ) {
@@ -149,10 +155,15 @@ public class Button extends Component implements Focusable {
 						return false;
 					}
 					if (event.pressed){
-						pressedButton = Button.this;
-						pressTime = 0;
-						clickReady = true;
+						// 시각적 피드백은 항상 허용
 						Button.this.onPointerDown();
+
+						// 클릭 처리는 첫 번째 버튼만
+						if (pressedButton == null) {
+							pressedButton = Button.this;
+							pressTime = 0;
+							clickReady = true;
+						}
 					} else {
 						Button.this.onPointerUp();
 						if (pressedButton == Button.this) {

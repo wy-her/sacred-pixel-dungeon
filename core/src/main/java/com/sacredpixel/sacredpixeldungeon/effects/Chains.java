@@ -109,7 +109,11 @@ public class Chains extends Group {
 			blockingVfx = false;
 			killAndErase();
 			if (callback != null) {
-				callback.call();
+				try {
+					callback.call();
+				} catch (Exception e) {
+					Game.reportException(e);
+				}
 			}
 			if (wasBlocking) Actor.removeVfxBlocker();
 

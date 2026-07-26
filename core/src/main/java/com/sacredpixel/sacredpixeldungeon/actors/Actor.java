@@ -179,6 +179,8 @@ public abstract class Actor implements Bundlable {
 	//On desktop, the actor thread sleeps until blockers clear.
 	//Incremented when a VFX animation starts, decremented when it finishes.
 	private static volatile int vfxBlockers = 0;
+	private static int vfxStallFrames = 0;
+	private static final int MAX_VFX_STALL_FRAMES = 180; // ~3 seconds at 60fps
 	public static void addVfxBlocker() { vfxBlockers++; }
 	public static void removeVfxBlocker() { vfxBlockers--; if (vfxBlockers < 0) vfxBlockers = 0; }
 	
@@ -210,6 +212,7 @@ public abstract class Actor implements Bundlable {
 		movingStallFrames = 0;
 		movingStallActor = null;
 		vfxBlockers = 0;
+		vfxStallFrames = 0;
 	}
 
 	public static synchronized void fixTime() {
@@ -310,6 +313,12 @@ public abstract class Actor implements Bundlable {
 			//On desktop, sleep briefly in a loop until the blocker clears.
 			if (vfxBlockers > 0) {
 				if (ThreadCompat.currentThread() == null) {
+					//HTML5: safety timeout - if VFX blockers are stuck for ~3 seconds, force-clear
+					vfxStallFrames++;
+					if (vfxStallFrames > MAX_VFX_STALL_FRAMES) {
+						vfxBlockers = 0;
+						vfxStallFrames = 0;
+					}
 					current = null; //clear so processing() returns false, allowing retry next frame
 					break;
 				} else {
@@ -324,6 +333,9 @@ public abstract class Actor implements Bundlable {
 						}
 					}
 				}
+			} else {
+				//VFX blockers cleared, reset stall counter
+				vfxStallFrames = 0;
 			}
 
 			current = null;

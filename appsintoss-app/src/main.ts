@@ -573,9 +573,10 @@ function loadBannerAd() {
             bannerAdGroupId,
             bannerContainer,
             {
-                // 스타일 옵션 - auto로 설정하여 시스템 테마에 맞춤
-                theme: 'auto',
+                // 스타일 옵션 - dark 테마, grey 배경
+                theme: 'dark',
                 variant: 'expanded',
+                background: 'grey',
                 callbacks: {
                     onAdRendered: (payload) => {
                         console.log('Banner ad rendered:', payload);

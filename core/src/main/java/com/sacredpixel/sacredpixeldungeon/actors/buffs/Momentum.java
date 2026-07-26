@@ -97,8 +97,15 @@ public class Momentum extends Buff implements ActionIndicator.Action {
 	
 	public void gainStack(){
 		movedLastTurn = true;
+		// Sync timing to prevent turn order desync after level transitions
+		// The delay must exceed our current cooldown() to actually push us forward
+		// After level transition: Momentum.time=1, Hero.time=0, now=0
+		// Without minDelay: postpone(0.5) fails because 1 < 0.5 is false
+		// With minDelay: postpone(1.01) succeeds because 1 < 1.01 is true
+		float delay = target.cooldown() + 1/target.speed();
+		float minDelay = cooldown() + 0.01f;
+		postpone(Math.max(delay, minDelay));
 		if (freerunCooldown <= 0 && !freerunning()){
-			postpone(target.cooldown()+(1/target.speed()));
 			momentumStacks = Math.min(momentumStacks + 1, 10);
 			ActionIndicator.setAction(this);
 			BuffIndicator.refreshHero();
@@ -112,9 +119,11 @@ public class Momentum extends Buff implements ActionIndicator.Action {
 	 */
 	public void onNonMovementAction(){
 		movedLastTurn = true;
-		if (freerunCooldown <= 0 && !freerunning()){
-			postpone(target.cooldown()+(1/target.speed()));
-		}
+		// Sync timing to prevent turn order desync after level transitions
+		// Same logic as gainStack() - must exceed current cooldown to push forward
+		float delay = target.cooldown() + 1/target.speed();
+		float minDelay = cooldown() + 0.01f;
+		postpone(Math.max(delay, minDelay));
 	}
 
 	public boolean freerunning(){

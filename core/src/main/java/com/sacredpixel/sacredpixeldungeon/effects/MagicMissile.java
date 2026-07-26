@@ -331,7 +331,13 @@ public class MagicMissile extends Emitter {
 				//clear blockingVfx before callback so kill() doesn't double-remove
 				boolean wasBlocking = blockingVfx;
 				blockingVfx = false;
-				if (callback != null ) callback.call();
+				if (callback != null) {
+					try {
+						callback.call();
+					} catch (Exception e) {
+						Game.reportException(e);
+					}
+				}
 				//remove the VFX blocker AFTER the callback has applied damage and called next()
 				if (wasBlocking) Actor.removeVfxBlocker();
 			}

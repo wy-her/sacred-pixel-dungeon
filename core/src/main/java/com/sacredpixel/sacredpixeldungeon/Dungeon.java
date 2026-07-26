@@ -502,9 +502,18 @@ public class Dungeon {
 		hero.viewDistance = light == null ? level.viewDistance : Math.max( Light.DISTANCE, level.viewDistance );
 		
 		hero.curAction = hero.lastAction = null;
-		hero.ready = true;
+		// Set ready to false so Hero.act() will call ready() method properly
+		// This ensures GameScene.ready() is called, which sets up the cell selector
+		// Setting ready=true directly skipped this initialization, blocking movement
+		hero.ready = false;
 
 		observe();
+		// Sync hero's FOV reference and update visible enemies immediately after level transition
+		// This fixes the enemy indicator staying stuck at previous floor count
+		if (level != null && level.mobs != null) {
+			hero.fieldOfView = level.heroFOV;
+			hero.checkVisibleMobs();
+		}
 		try {
 			saveAll();
 		} catch (IOException e) {

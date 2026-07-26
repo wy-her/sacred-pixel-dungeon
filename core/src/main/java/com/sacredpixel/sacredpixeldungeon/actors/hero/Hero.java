@@ -958,6 +958,7 @@ public class Hero extends Char {
 		waitOrPickup = false;
 		ready = true;
 		canSelfTrample = true;
+		recentlyInterrupted = false;  // Clear interrupt flag to allow movement
 
 		AttackIndicator.updateState();
 
