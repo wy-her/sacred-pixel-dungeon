@@ -37,30 +37,24 @@ public class WebDataManager {
         public int badgeCount;
         public int rankingCount;
         public int highestScore;
-        public int catalogCount;
+        public int equipmentCount;
+        public int consumablesCount;
         public int bestiaryCount;
-        public int documentCount;
-        public int guideCount;
-        public int alchemyCount;
-        public int loreCount;
+        public int loreCount;  // includes INTROS + region lore
 
         // Local data counts (for comparison)
         public int localBadgeCount;
-        public int localRankingCount;
-        public int localHighestScore;
-        public int localCatalogCount;
+        public int localEquipmentCount;
+        public int localConsumablesCount;
         public int localBestiaryCount;
         public int localLoreCount;
-        public int localGuideCount;
-        public int localAlchemyCount;
 
         // Differences
         public int newBadges;
-        public int newCatalogItems;
+        public int newEquipmentItems;
+        public int newConsumablesItems;
         public int newBestiaryEntries;
         public int newLorePages;
-        public int newGuidePages;
-        public int newAlchemyPages;
 
         // Raw parsed data for merge
         WebDataImporter.ImportedData importedData;
@@ -200,30 +194,24 @@ public class WebDataManager {
             preview.badgeCount = imported.badgeCount;
             preview.rankingCount = imported.rankingCount;
             preview.highestScore = imported.highestScore;
-            preview.catalogCount = imported.catalogCount;
+            preview.equipmentCount = imported.equipmentCount;
+            preview.consumablesCount = imported.consumablesCount;
             preview.bestiaryCount = imported.bestiaryCount;
-            preview.documentCount = imported.documentCount;
-            preview.guideCount = imported.guideCount;
-            preview.alchemyCount = imported.alchemyCount;
             preview.loreCount = imported.loreCount;
 
             // Get local data for comparison
             preview.localBadgeCount = countLocalBadges();
-            preview.localRankingCount = countLocalRankings();
-            preview.localHighestScore = getLocalHighestScore();
-            preview.localCatalogCount = countLocalCatalog();
+            preview.localEquipmentCount = countLocalEquipment();
+            preview.localConsumablesCount = countLocalConsumables();
             preview.localBestiaryCount = countLocalBestiary();
             preview.localLoreCount = countLocalLore();
-            preview.localGuideCount = countLocalGuide();
-            preview.localAlchemyCount = countLocalAlchemy();
 
             // Calculate differences
             preview.newBadges = Math.max(0, preview.badgeCount - preview.localBadgeCount);
-            preview.newCatalogItems = Math.max(0, preview.catalogCount - preview.localCatalogCount);
+            preview.newEquipmentItems = Math.max(0, preview.equipmentCount - preview.localEquipmentCount);
+            preview.newConsumablesItems = Math.max(0, preview.consumablesCount - preview.localConsumablesCount);
             preview.newBestiaryEntries = Math.max(0, preview.bestiaryCount - preview.localBestiaryCount);
             preview.newLorePages = Math.max(0, preview.loreCount - preview.localLoreCount);
-            preview.newGuidePages = Math.max(0, preview.guideCount - preview.localGuideCount);
-            preview.newAlchemyPages = Math.max(0, preview.alchemyCount - preview.localAlchemyCount);
 
             preview.valid = true;
             log("previewImport: SUCCESS");
@@ -360,10 +348,19 @@ public class WebDataManager {
         return highest;
     }
 
-    private static int countLocalCatalog() {
+    private static int countLocalEquipment() {
         int count = 0;
         for (com.sacredpixel.sacredpixeldungeon.journal.Catalog cat :
-                com.sacredpixel.sacredpixeldungeon.journal.Catalog.values()) {
+                com.sacredpixel.sacredpixeldungeon.journal.Catalog.equipmentCatalogs) {
+            count += cat.totalSeen();
+        }
+        return count;
+    }
+
+    private static int countLocalConsumables() {
+        int count = 0;
+        for (com.sacredpixel.sacredpixeldungeon.journal.Catalog cat :
+                com.sacredpixel.sacredpixeldungeon.journal.Catalog.consumableCatalogs) {
             count += cat.totalSeen();
         }
         return count;
@@ -381,7 +378,9 @@ public class WebDataManager {
     private static int countLocalLore() {
         com.sacredpixel.sacredpixeldungeon.journal.Journal.loadGlobal();
         int count = 0;
+        // Lore includes INTROS + region lore documents
         com.sacredpixel.sacredpixeldungeon.journal.Document[] loreDocs = {
+            com.sacredpixel.sacredpixeldungeon.journal.Document.INTROS,
             com.sacredpixel.sacredpixeldungeon.journal.Document.SEWERS_GUARD,
             com.sacredpixel.sacredpixeldungeon.journal.Document.PRISON_WARDEN,
             com.sacredpixel.sacredpixeldungeon.journal.Document.CAVES_EXPLORER,
@@ -392,24 +391,6 @@ public class WebDataManager {
             for (String page : doc.pageNames()) {
                 if (doc.isPageFound(page)) count++;
             }
-        }
-        return count;
-    }
-
-    private static int countLocalGuide() {
-        com.sacredpixel.sacredpixeldungeon.journal.Journal.loadGlobal();
-        int count = 0;
-        for (String page : com.sacredpixel.sacredpixeldungeon.journal.Document.ADVENTURERS_GUIDE.pageNames()) {
-            if (com.sacredpixel.sacredpixeldungeon.journal.Document.ADVENTURERS_GUIDE.isPageFound(page)) count++;
-        }
-        return count;
-    }
-
-    private static int countLocalAlchemy() {
-        com.sacredpixel.sacredpixeldungeon.journal.Journal.loadGlobal();
-        int count = 0;
-        for (String page : com.sacredpixel.sacredpixeldungeon.journal.Document.ALCHEMY_GUIDE.pageNames()) {
-            if (com.sacredpixel.sacredpixeldungeon.journal.Document.ALCHEMY_GUIDE.isPageFound(page)) count++;
         }
         return count;
     }

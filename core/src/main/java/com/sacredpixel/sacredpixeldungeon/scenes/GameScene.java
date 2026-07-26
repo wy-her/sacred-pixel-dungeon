@@ -103,6 +103,7 @@ import com.sacredpixel.sacredpixeldungeon.tutorial.TutorialState;
 import com.sacredpixel.sacredpixeldungeon.ui.ActionIndicator;
 import com.sacredpixel.sacredpixeldungeon.ui.AttackIndicator;
 import com.sacredpixel.sacredpixeldungeon.ui.Banner;
+import com.sacredpixel.sacredpixeldungeon.ui.Button;
 import com.sacredpixel.sacredpixeldungeon.ui.BossHealthBar;
 import com.sacredpixel.sacredpixeldungeon.ui.CharHealthIndicator;
 import com.sacredpixel.sacredpixeldungeon.ui.GameLog;
@@ -1591,6 +1592,21 @@ public class GameScene extends PixelScene {
 
 	public static void gameOver() {
 		if (scene == null) return;
+
+		// Clean up UI state to prevent input conflicts
+		if (cellSelector != null) {
+			cellSelector.resetKeyHold();
+			cellSelector.enabled = false;
+			cellSelector.listener = defaultCellListener;
+		}
+		if (Dungeon.hero != null) {
+			Dungeon.hero.resting = false;
+			Dungeon.hero.curAction = null;
+		}
+
+		// Reset static button state to allow Game Over buttons to receive input
+		// (prevents stuck pressedButton from rapid Wait button spam before death)
+		Button.clearPressedButton();
 
 		Banner gameOver = new Banner( BannerSprites.get( BannerSprites.Type.GAME_OVER ) );
 		gameOver.show( 0x000000, 2f );

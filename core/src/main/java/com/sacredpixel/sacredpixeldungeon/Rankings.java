@@ -755,10 +755,14 @@ public enum Rankings {
 
 			int result = (int)Math.signum( rhs.score - lhs.score );
 			if (result == 0) {
-				return (int)Math.signum( rhs.gameID.hashCode() - lhs.gameID.hashCode());
-			} else {
-				return result;
+				// 2nd criteria: shorter duration (fewer turns) ranks higher
+				result = (int)Math.signum( lhs.duration - rhs.duration );
 			}
+			if (result == 0) {
+				// 3rd criteria: fallback to gameID hash for stable sorting
+				return (int)Math.signum( rhs.gameID.hashCode() - lhs.gameID.hashCode());
+			}
+			return result;
 		}
 	};
 }

@@ -527,7 +527,7 @@ public class AlchemyScene extends PixelScene implements Signal.Listener<KeyEvent
 
 			@Override
 			protected String hoverText() {
-				return Messages.titleCase(Document.ALCHEMY_GUIDE.title());
+				return Messages.get(WndJournal.AlchemyTab.class, "title");
 			}
 		};
 		btnGuide.icon(new ItemSprite(ItemSpriteSheet.ALCH_PAGE));

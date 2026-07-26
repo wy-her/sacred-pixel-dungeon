@@ -157,12 +157,27 @@ public class TitleScene extends PixelScene {
 		float scaledW = origW * titleScale;
 		float scaledH = origH * titleScale;
 
-		// Keep original topRegion for button placement
-		float topRegion = Math.max(scaledH - 6, h*0.45f);
+		// Calculate content height for vertical centering
+		final int BTN_HEIGHT = 20;
+		final int buttonRows = 5;
+		final int minGap = 2;
+		final float logoButtonGap = 5;
+		final int gapCount = buttonRows - 1;  // 4 gaps between 5 rows
 
-		// Position logo closer to buttons (just above button area)
+		float minContentHeight = scaledH + logoButtonGap
+				+ (buttonRows * BTN_HEIGHT)
+				+ (gapCount * minGap);
+
+		// Distribute extra space: 1/25 to GAP, 24/25 to margins (equal top/bottom)
+		float extraSpace = Math.max(h - minContentHeight, 0);
+		float gapExtra = extraSpace / 25f;
+		float marginSpace = extraSpace - gapExtra;
+		float margin = marginSpace / 2f;
+		int GAP = minGap + (int)(gapExtra / gapCount);
+
+		// Position logo with equal top margin
 		title.x = insets.left + (w - scaledW) / 2f;
-		title.y = insets.top + topRegion - scaledH - 5;
+		title.y = insets.top + margin;
 
 		// Glow overlay on title logo (additive blending for glow effect)
 		titleGlow = BannerSprites.get(BannerSprites.Type.TITLE_GLOW_PORT);
@@ -296,16 +311,12 @@ public class TitleScene extends PixelScene {
 		btnAbout.icon(sacredLogo);
 		add(btnAbout);
 		
-		final int BTN_HEIGHT = 20;
-		int GAP = (int)(h - topRegion - 5*BTN_HEIGHT)/5;  // 5 rows now (including tutorial)
-		GAP /= 5;
-		GAP = Math.max(GAP, 2);
-
 		//Button area width is fixed, not extended by fireballs
 		float btnAreaLeft = insets.left + (w - buttonAreaWidth) / 2f;
 		float halfWidth = (buttonAreaWidth/2)-1;
-		// Row 1: Play (full width)
-		btnPlay.setRect(btnAreaLeft, insets.top + topRegion+GAP, buttonAreaWidth, BTN_HEIGHT);
+		// Row 1: Play (full width) - positioned relative to logo bottom
+		float buttonsStartY = title.y + scaledH + logoButtonGap;
+		btnPlay.setRect(btnAreaLeft, buttonsStartY, buttonAreaWidth, BTN_HEIGHT);
 		align(btnPlay);
 		// Row 2: Tutorial (full width)
 		btnTutorial.setRect(btnAreaLeft, btnPlay.bottom()+ GAP, buttonAreaWidth, BTN_HEIGHT);

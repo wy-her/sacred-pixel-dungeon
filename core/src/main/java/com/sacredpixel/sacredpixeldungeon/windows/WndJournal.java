@@ -696,7 +696,7 @@ public class WndJournal extends WndTabbed {
 		}
 		
 		public void updateList(){
-			list.addTitle(Document.ADVENTURERS_GUIDE.title());
+			list.addTitle(Messages.get(this, "title"));
 
 			for (String page : Document.ADVENTURERS_GUIDE.pageNames()){
 				boolean found = Document.ADVENTURERS_GUIDE.isPageFound(page);
@@ -1646,7 +1646,7 @@ public class WndJournal extends WndTabbed {
 				}
 				add( badgesLocal );
 			} else {
-				title = PixelScene.renderTextBlock(Messages.get(this, "title_main_menu"), 8);
+				title = PixelScene.renderTextBlock(Messages.get(this, "title"), 8);
 				title.hardlight(Window.TITLE_COLOR);
 				add(title);
 			}

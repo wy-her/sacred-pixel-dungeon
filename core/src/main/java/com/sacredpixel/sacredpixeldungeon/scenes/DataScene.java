@@ -35,8 +35,10 @@ import com.sacredpixel.sacredpixeldungeon.ui.RenderedTextBlock;
 import com.sacredpixel.sacredpixeldungeon.ui.StyledButton;
 import com.sacredpixel.sacredpixeldungeon.ui.Window;
 import com.sacredpixel.sacredpixeldungeon.windows.IconTitle;
+import com.sacredpixel.sacredpixeldungeon.windows.WndJournal;
 import com.sacredpixel.sacredpixeldungeon.windows.WndMessage;
 import com.sacredpixel.sacredpixeldungeon.windows.WndOptions;
+import com.sacredpixel.sacredpixeldungeon.windows.WndRanking;
 import com.sacredpixel.sacredpixeldungeon.SPDAction;
 import com.watabou.input.GameAction;
 import com.watabou.input.KeyBindings;
@@ -332,47 +334,56 @@ public class DataScene extends PixelScene {
     private float createSummaryStats(float x, float startY, int maxWidth) {
         float pos = startY;
 
-        // 1. Rankings count
-        int rankCount = Rankings.INSTANCE.records.size();
+        // 1. Best score (references WndRanking.score key)
         int highScore = 0;
         for (Rankings.Record r : Rankings.INSTANCE.records) {
             if (r.score > highScore) highScore = r.score;
         }
-        pos = statSlot(x, pos, maxWidth, Messages.get(this, "rankings", rankCount));
+        pos = statSlot(x, pos, maxWidth, Messages.get(this, "best_score", highScore));
 
-        // 2. Best record
-        pos = statSlot(x, pos, maxWidth, Messages.get(this, "best_record", highScore));
-
-        // 3. Badge count
+        // 2. Badge count (references WndJournal.BadgesTab key)
         int badgeCount = 0;
         int totalBadges = Badges.Badge.values().length;
         for (Badges.Badge b : Badges.Badge.values()) {
             if (Badges.isUnlocked(b)) badgeCount++;
         }
-        pos = statSlot(x, pos, maxWidth, Messages.get(this, "badges", badgeCount, totalBadges));
+        String badgesTitle = Messages.get(WndJournal.BadgesTab.class, "title");
+        pos = statSlot(x, pos, maxWidth, badgesTitle + ": " + badgeCount + "/" + totalBadges);
 
-        // 4. Catalog count
-        int catalogCount = 0;
-        int totalCatalog = 0;
-        for (Catalog cat : Catalog.values()) {
-            catalogCount += cat.totalSeen();
-            totalCatalog += cat.items().size();
+        // 3. Equipment catalog count (references WndJournal.CatalogTab key)
+        int equipCount = 0;
+        int totalEquip = 0;
+        for (Catalog cat : Catalog.equipmentCatalogs) {
+            equipCount += cat.totalSeen();
+            totalEquip += cat.items().size();
         }
-        pos = statSlot(x, pos, maxWidth, Messages.get(this, "catalog", catalogCount, totalCatalog));
+        String equipTitle = Messages.get(WndJournal.CatalogTab.class, "title_equipment");
+        pos = statSlot(x, pos, maxWidth, equipTitle + ": " + equipCount + "/" + totalEquip);
 
-        // 5. Bestiary count
+        // 4. Consumables catalog count (references WndJournal.CatalogTab key)
+        int consumCount = 0;
+        int totalConsum = 0;
+        for (Catalog cat : Catalog.consumableCatalogs) {
+            consumCount += cat.totalSeen();
+            totalConsum += cat.items().size();
+        }
+        String consumTitle = Messages.get(WndJournal.CatalogTab.class, "title_consumables");
+        pos = statSlot(x, pos, maxWidth, consumTitle + ": " + consumCount + "/" + totalConsum);
+
+        // 5. Bestiary count (references WndJournal.CatalogTab key)
         int bestiaryCount = 0;
         int totalBestiary = 0;
         for (Bestiary cat : Bestiary.values()) {
             bestiaryCount += cat.totalSeen();
             totalBestiary += cat.entities().size();
         }
-        pos = statSlot(x, pos, maxWidth, Messages.get(this, "bestiary", bestiaryCount, totalBestiary));
+        String bestiaryTitle = Messages.get(WndJournal.CatalogTab.class, "title_bestiary");
+        pos = statSlot(x, pos, maxWidth, bestiaryTitle + ": " + bestiaryCount + "/" + totalBestiary);
 
-        // 6. Lore documents count
+        // 6. Lore documents count (references WndJournal.CatalogTab key, includes INTROS + region lore)
         int loreFound = 0;
         int loreTotal = 0;
-        Document[] loreDocs = {Document.SEWERS_GUARD, Document.PRISON_WARDEN,
+        Document[] loreDocs = {Document.INTROS, Document.SEWERS_GUARD, Document.PRISON_WARDEN,
                                Document.CAVES_EXPLORER, Document.CITY_WARLOCK, Document.HALLS_KING};
         for (Document doc : loreDocs) {
             loreTotal += doc.pageNames().size();
@@ -380,23 +391,8 @@ public class DataScene extends PixelScene {
                 if (doc.isPageFound(page)) loreFound++;
             }
         }
-        pos = statSlot(x, pos, maxWidth, Messages.get(this, "lore", loreFound, loreTotal));
-
-        // 7. Guide pages count
-        int guideFound = 0;
-        int guideTotal = Document.ADVENTURERS_GUIDE.pageNames().size();
-        for (String page : Document.ADVENTURERS_GUIDE.pageNames()) {
-            if (Document.ADVENTURERS_GUIDE.isPageFound(page)) guideFound++;
-        }
-        pos = statSlot(x, pos, maxWidth, Messages.get(this, "guide", guideFound, guideTotal));
-
-        // 8. Alchemy pages count
-        int alchemyFound = 0;
-        int alchemyTotal = Document.ALCHEMY_GUIDE.pageNames().size();
-        for (String page : Document.ALCHEMY_GUIDE.pageNames()) {
-            if (Document.ALCHEMY_GUIDE.isPageFound(page)) alchemyFound++;
-        }
-        pos = statSlot(x, pos, maxWidth, Messages.get(this, "alchemy", alchemyFound, alchemyTotal));
+        String loreTitle = Messages.get(WndJournal.CatalogTab.class, "title_lore");
+        pos = statSlot(x, pos, maxWidth, loreTitle + ": " + loreFound + "/" + loreTotal);
 
         return pos;
     }

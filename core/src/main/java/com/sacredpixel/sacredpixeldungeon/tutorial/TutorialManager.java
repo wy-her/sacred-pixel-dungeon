@@ -148,6 +148,29 @@ public class TutorialManager {
 		return savedJournalState != null;
 	}
 
+	/**
+	 * Marks the Tutorial intro story as read.
+	 * If tutorial isolation is active, also updates the backed up journal state
+	 * so the read status persists after tutorial mode exits.
+	 */
+	public static void markTutorialStoryRead() {
+		// Mark in current state
+		Document.INTROS.readPage("Tutorial");
+
+		// If in tutorial isolation, also update backed up state
+		if (savedJournalState != null && savedJournalState.contains("documents")) {
+			Bundle docsBundle = savedJournalState.getBundle("documents");
+			Bundle introsBundle;
+			if (docsBundle.contains("INTROS")) {
+				introsBundle = docsBundle.getBundle("INTROS");
+			} else {
+				introsBundle = new Bundle();
+				docsBundle.put("INTROS", introsBundle);
+			}
+			introsBundle.put("Tutorial", Document.READ);
+		}
+	}
+
 	public static boolean isTutorialLevel() {
 		return Dungeon.level instanceof TutorialLevel;
 	}

@@ -857,6 +857,12 @@ public class Toolbar extends Component {
 			if (value != active) {
 				if (icon != null) icon.alpha( value ? 1f : 0.4f);
 				active = value;
+				// Reset base color to match active state
+				if (value) {
+					base.resetColor();
+				} else {
+					base.tint( BGCOLOR, 0.7f );
+				}
 			}
 		}
 	}

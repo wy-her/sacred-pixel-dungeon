@@ -54,6 +54,11 @@ public class Button extends Component implements Focusable {
 	protected float pressTime;
 	protected boolean clickReady;
 
+	// Clears the global pressed button state (e.g., on scene transitions or hero death)
+	public static void clearPressedButton() {
+		pressedButton = null;
+	}
+
 	@Override
 	protected void createChildren() {
 		hotArea = new PointerArea( 0, 0, 0, 0 ) {

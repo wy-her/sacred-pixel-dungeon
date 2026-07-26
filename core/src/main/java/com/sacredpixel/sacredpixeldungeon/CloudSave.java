@@ -593,8 +593,8 @@ public class CloudSave {
             }
         }
 
-        // Sort by score descending and keep top TABLE_SIZE records
-        Collections.sort(Rankings.INSTANCE.records, (a, b) -> b.score - a.score);
+        // Sort by scoreComparator (customSeed > score > duration > gameID)
+        Collections.sort(Rankings.INSTANCE.records, Rankings.scoreComparator);
         while (Rankings.INSTANCE.records.size() > Rankings.TABLE_SIZE) {
             Rankings.INSTANCE.records.remove(Rankings.INSTANCE.records.size() - 1);
         }

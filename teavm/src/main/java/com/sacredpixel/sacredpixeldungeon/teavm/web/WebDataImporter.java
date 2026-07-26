@@ -7,6 +7,8 @@
 package com.sacredpixel.sacredpixeldungeon.teavm.web;
 
 import com.sacredpixel.sacredpixeldungeon.Rankings;
+import com.sacredpixel.sacredpixeldungeon.journal.Catalog;
+import com.sacredpixel.sacredpixeldungeon.journal.Document;
 import com.watabou.utils.Bundle;
 
 import java.nio.ByteBuffer;
@@ -123,12 +125,10 @@ public class WebDataImporter {
         public int badgeCount;
         public int rankingCount;
         public int highestScore;
-        public int catalogCount;
+        public int equipmentCount;
+        public int consumablesCount;
         public int bestiaryCount;
-        public int documentCount;
-        public int guideCount;
-        public int alchemyCount;
-        public int loreCount;
+        public int loreCount;  // includes INTROS + region lore
     }
 
     /**
@@ -161,7 +161,10 @@ public class WebDataImporter {
         // Catalog (50 bytes)
         result.catalog = new byte[CATALOG_SIZE];
         buf.get(result.catalog);
-        result.catalogCount = countBits(result.catalog);
+        // Split catalog count into equipment and consumables
+        int equipmentBitCount = getEquipmentBitCount();
+        result.equipmentCount = countBitsInRange(result.catalog, 0, equipmentBitCount - 1);
+        result.consumablesCount = countBitsInRange(result.catalog, equipmentBitCount, 399);
 
         // Bestiary (25 bytes)
         result.bestiary = new byte[BESTIARY_SIZE];
@@ -171,10 +174,8 @@ public class WebDataImporter {
         // Document (16 bytes)
         result.document = new byte[DOCUMENT_SIZE];
         buf.get(result.document);
-        result.documentCount = countDocumentPages(result.document);
-        result.guideCount = countDocumentPagesInRange(result.document, 0, 13);
-        result.alchemyCount = countDocumentPagesInRange(result.document, 14, 22);
-        result.loreCount = countDocumentPagesInRange(result.document, 30, 59);
+        // Lore includes INTROS (23-29) + region lore (30-59)
+        result.loreCount = countDocumentPagesInRange(result.document, 23, 59);
 
         // Rankings count
         int rankingCount = buf.get() & 0xFF;
@@ -437,6 +438,31 @@ public class WebDataImporter {
         int count = 0;
         for (byte b : bitmap) {
             count += Integer.bitCount(b & 0xFF);
+        }
+        return count;
+    }
+
+    /**
+     * Counts set bits in a specific range of the bitmap.
+     */
+    private static int countBitsInRange(byte[] bitmap, int start, int end) {
+        int count = 0;
+        for (int i = start; i <= end && i < bitmap.length * 8; i++) {
+            if ((bitmap[i / 8] & (1 << (i % 8))) != 0) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Gets total number of items in equipment catalogs.
+     * Used to split catalog bitmap into equipment/consumables.
+     */
+    private static int getEquipmentBitCount() {
+        int count = 0;
+        for (Catalog cat : Catalog.equipmentCatalogs) {
+            count += cat.items().size();
         }
         return count;
     }

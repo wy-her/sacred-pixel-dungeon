@@ -12,6 +12,8 @@ import com.sacredpixel.sacredpixeldungeon.journal.Catalog;
 import com.sacredpixel.sacredpixeldungeon.journal.Document;
 import com.sacredpixel.sacredpixeldungeon.messages.Messages;
 import com.sacredpixel.sacredpixeldungeon.scenes.DataScene;
+import com.sacredpixel.sacredpixeldungeon.windows.WndJournal;
+import com.sacredpixel.sacredpixeldungeon.windows.WndRanking;
 
 /**
  * TeaVM implementation of DataScene.DataService.
@@ -24,9 +26,17 @@ public class WebDataServiceImpl implements DataScene.DataService {
         return Badges.Badge.values().length;
     }
 
-    private static int getTotalCatalog() {
+    private static int getTotalEquipment() {
         int total = 0;
-        for (Catalog cat : Catalog.values()) {
+        for (Catalog cat : Catalog.equipmentCatalogs) {
+            total += cat.items().size();
+        }
+        return total;
+    }
+
+    private static int getTotalConsumables() {
+        int total = 0;
+        for (Catalog cat : Catalog.consumableCatalogs) {
             total += cat.items().size();
         }
         return total;
@@ -42,20 +52,13 @@ public class WebDataServiceImpl implements DataScene.DataService {
 
     private static int getTotalLore() {
         int total = 0;
-        Document[] loreDocs = {Document.SEWERS_GUARD, Document.PRISON_WARDEN,
+        // Includes INTROS + region lore documents
+        Document[] loreDocs = {Document.INTROS, Document.SEWERS_GUARD, Document.PRISON_WARDEN,
                 Document.CAVES_EXPLORER, Document.CITY_WARLOCK, Document.HALLS_KING};
         for (Document doc : loreDocs) {
             total += doc.pageNames().size();
         }
         return total;
-    }
-
-    private static int getTotalGuide() {
-        return Document.ADVENTURERS_GUIDE.pageNames().size();
-    }
-
-    private static int getTotalAlchemy() {
-        return Document.ALCHEMY_GUIDE.pageNames().size();
     }
 
     @Override
@@ -86,55 +89,50 @@ public class WebDataServiceImpl implements DataScene.DataService {
 
         StringBuilder sb = new StringBuilder();
 
-        // Use Messages.get for proper localization, same format as DataScene
+        // Use journal key references for localization consistency
         // Use \n\n as delimiter between stats for WndImportPreview to split and add GAP
-        // 1. Rankings
-        sb.append(Messages.get(DataScene.class, "rankings", preview.rankingCount));
+
+        // 1. Best score (references DataScene.best_score key)
+        sb.append(Messages.get(DataScene.class, "best_score", preview.highestScore));
         sb.append("\n\n");
 
-        // 2. Best record
-        sb.append(Messages.get(DataScene.class, "best_record", preview.highestScore));
-        sb.append("\n\n");
-
-        // 3. Badges
-        sb.append(Messages.get(DataScene.class, "badges", preview.badgeCount, getTotalBadges()));
+        // 2. Badges (references WndJournal.BadgesTab key)
+        String badgesTitle = Messages.get(WndJournal.BadgesTab.class, "title");
+        sb.append(badgesTitle).append(": ").append(preview.badgeCount).append("/").append(getTotalBadges());
         if (preview.newBadges > 0) {
             sb.append(" (+").append(preview.newBadges).append(")");
         }
         sb.append("\n\n");
 
-        // 4. Catalog
-        sb.append(Messages.get(DataScene.class, "catalog", preview.catalogCount, getTotalCatalog()));
-        if (preview.newCatalogItems > 0) {
-            sb.append(" (+").append(preview.newCatalogItems).append(")");
+        // 3. Equipment (references WndJournal.CatalogTab key)
+        String equipTitle = Messages.get(WndJournal.CatalogTab.class, "title_equipment");
+        sb.append(equipTitle).append(": ").append(preview.equipmentCount).append("/").append(getTotalEquipment());
+        if (preview.newEquipmentItems > 0) {
+            sb.append(" (+").append(preview.newEquipmentItems).append(")");
         }
         sb.append("\n\n");
 
-        // 5. Bestiary
-        sb.append(Messages.get(DataScene.class, "bestiary", preview.bestiaryCount, getTotalBestiary()));
+        // 4. Consumables (references WndJournal.CatalogTab key)
+        String consumTitle = Messages.get(WndJournal.CatalogTab.class, "title_consumables");
+        sb.append(consumTitle).append(": ").append(preview.consumablesCount).append("/").append(getTotalConsumables());
+        if (preview.newConsumablesItems > 0) {
+            sb.append(" (+").append(preview.newConsumablesItems).append(")");
+        }
+        sb.append("\n\n");
+
+        // 5. Bestiary (references WndJournal.CatalogTab key)
+        String bestiaryTitle = Messages.get(WndJournal.CatalogTab.class, "title_bestiary");
+        sb.append(bestiaryTitle).append(": ").append(preview.bestiaryCount).append("/").append(getTotalBestiary());
         if (preview.newBestiaryEntries > 0) {
             sb.append(" (+").append(preview.newBestiaryEntries).append(")");
         }
         sb.append("\n\n");
 
-        // 6. Lore
-        sb.append(Messages.get(DataScene.class, "lore", preview.loreCount, getTotalLore()));
+        // 6. Lore (references WndJournal.CatalogTab key, includes INTROS + region lore)
+        String loreTitle = Messages.get(WndJournal.CatalogTab.class, "title_lore");
+        sb.append(loreTitle).append(": ").append(preview.loreCount).append("/").append(getTotalLore());
         if (preview.newLorePages > 0) {
             sb.append(" (+").append(preview.newLorePages).append(")");
-        }
-        sb.append("\n\n");
-
-        // 7. Guide
-        sb.append(Messages.get(DataScene.class, "guide", preview.guideCount, getTotalGuide()));
-        if (preview.newGuidePages > 0) {
-            sb.append(" (+").append(preview.newGuidePages).append(")");
-        }
-        sb.append("\n\n");
-
-        // 8. Alchemy
-        sb.append(Messages.get(DataScene.class, "alchemy", preview.alchemyCount, getTotalAlchemy()));
-        if (preview.newAlchemyPages > 0) {
-            sb.append(" (+").append(preview.newAlchemyPages).append(")");
         }
 
         return sb.toString();

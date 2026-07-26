@@ -188,6 +188,11 @@ public class InterlevelScene extends PixelScene {
 	public void create() {
 		super.create();
 
+		// Reset static thread state to prevent stale references in TeaVM/web build
+		// (Previous thread reference may persist across scene transitions)
+		thread = null;
+		error = null;
+
 		// Detect if an ad was recently shown (within AD_RECENT_THRESHOLD)
 		// If so, skip all fade animations and show final state immediately
 		double adTimestamp = InterstitialAd.getAdCompletedTimestamp();
@@ -369,6 +374,8 @@ public class InterlevelScene extends PixelScene {
 			// Tutorial: show "Tutorial" intro story
 			isStoryFloor = true;
 			createStoryElements("Tutorial");
+			// Mark Tutorial as read in both isolated and backed up state
+			TutorialManager.markTutorialStoryRead();
 		} else if (!isTestLevelOnly && mode == Mode.DESCEND && lastRegion <= 5){
 			if (Dungeon.hero == null || (loadingDepth > Statistics.deepestFloor && loadingDepth % 5 == 1)){
 				// Flag this as a story floor; actual story elements will be created

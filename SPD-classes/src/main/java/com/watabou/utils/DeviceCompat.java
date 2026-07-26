@@ -64,7 +64,7 @@ public class DeviceCompat {
 	}
 	
 	public static boolean isDebug(){
-		return Game.version.toUpperCase().contains("INDEV");
+		return Game.version != null && Game.version.toUpperCase().contains("INDEV");
 	}
 	
 	public static void log( String tag, String message ){
