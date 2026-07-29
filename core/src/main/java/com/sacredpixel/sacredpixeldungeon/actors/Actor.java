@@ -525,8 +525,24 @@ public abstract class Actor implements Bundlable {
 				//On HTML5, mark the actor as waiting so it isn't re-selected next frame.
 				//This prevents mobs from acting multiple times before their animation callback
 				//calls next() (e.g. Tengu firing multiple shurikens in one turn).
+				//
+				//IMPORTANT: Don't set waitingForCallback for Hero when hero.ready=true.
+				//hero.ready=true means Hero is waiting for PLAYER INPUT, not an animation callback.
+				//Setting waitingForCallback in this case would block the hero from being selected
+				//even though they're ready to receive input. (#147)
 				if (ThreadCompat.currentThread() == null && current != null) {
-					current.waitingForCallback = true;
+					boolean isHeroWaitingForInput = (current == Dungeon.hero && Dungeon.hero.ready);
+					// DEBUG: Log when waitingForCallback is being set for Hero
+					if (current == Dungeon.hero) {
+						com.watabou.utils.DeviceCompat.log("CALLBACK_DEBUG", "Actor.process(): Hero doNext=false"
+							+ ", hero.ready=" + Dungeon.hero.ready
+							+ ", isHeroWaitingForInput=" + isHeroWaitingForInput
+							+ ", willSetWaitingForCallback=" + !isHeroWaitingForInput
+						);
+					}
+					if (!isHeroWaitingForInput) {
+						current.waitingForCallback = true;
+					}
 				}
 				Object thread = ThreadCompat.currentThread();
 				if (thread != null) {

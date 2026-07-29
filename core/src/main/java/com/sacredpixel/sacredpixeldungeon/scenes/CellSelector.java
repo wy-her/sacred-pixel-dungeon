@@ -114,9 +114,10 @@ public class CellSelector extends ScrollArea {
 		}
 		//Block input while any enemy mob is in the middle of an attack animation
 		//BUT allow targeting selection (combo finishers, etc.) even during enemy animations
-		if (Actor.anyEnemyAnimating() && !isTargeting()) return;
+		if (Actor.anyEnemyAnimating() && !isTargeting()) {
+			return;
+		}
 		if (dragging) {
-
 			dragging = false;
 
 		} else {
@@ -748,11 +749,16 @@ public class CellSelector extends ScrollArea {
 	}
 
 	public void processKeyHold() {
-		if (Dungeon.hero != null && !Dungeon.hero.ready) return;
+		if (Dungeon.hero != null && !Dungeon.hero.ready) {
+			// DEBUG: Log when keyboard is also blocked (shouldn't happen if keyboard works)
+			com.watabou.utils.DeviceCompat.log("KEY_DEBUG", "processKeyHold() CHECK: hero.ready=false");
+			return;
+		}
 		//Block input while any enemy mob is in the middle of an attack animation
 		if (Actor.anyEnemyAnimating()) return;
 		//prioritize moving by controller stick over moving via keys
 		if (!directionFromAction(leftStickAction).isZero() && heldDelay < 0) {
+			com.watabou.utils.DeviceCompat.log("KEY_DEBUG", "processKeyHold() STICK: forcing hero.ready=true");
 			enabled = Dungeon.hero.ready = true;
 			Dungeon.observe();
 			if (moveFromActions(leftStickAction)) {
@@ -760,6 +766,7 @@ public class CellSelector extends ScrollArea {
 			}
 		} else if (!(directionFromAction(heldAction1).offset(directionFromAction(heldAction2)).isZero())
 				&& heldDelay <= 0){
+			com.watabou.utils.DeviceCompat.log("KEY_DEBUG", "processKeyHold() KEYS: forcing hero.ready=true");
 			enabled = Dungeon.hero.ready = true;
 			Dungeon.observe();
 			if (moveFromActions(heldAction1, heldAction2)) {

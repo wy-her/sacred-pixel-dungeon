@@ -1749,6 +1749,10 @@ public class GameScene extends PixelScene {
 	}
 
 	public static boolean cancelCellSelector() {
+		// Null check for level transitions before GameScene is created
+		if (cellSelector == null) {
+			return false;
+		}
 		if (cellSelector.listener != null && cellSelector.listener != defaultCellListener) {
 			cellSelector.resetKeyHold();
 			cellSelector.cancel();
@@ -1812,17 +1816,20 @@ public class GameScene extends PixelScene {
 	}
 
 	public static boolean cancel() {
-		cellSelector.resetKeyHold();
+		// Null check for level transitions before GameScene is created
+		if (cellSelector != null) {
+			cellSelector.resetKeyHold();
+		}
 		if (Dungeon.hero != null && (Dungeon.hero.curAction != null || Dungeon.hero.resting)) {
-			
+
 			Dungeon.hero.curAction = null;
 			Dungeon.hero.resting = false;
 			return true;
-			
+
 		} else {
-			
+
 			return cancelCellSelector();
-			
+
 		}
 	}
 	
@@ -1838,11 +1845,17 @@ public class GameScene extends PixelScene {
 	}
 	
 	public static void checkKeyHold(){
-		cellSelector.processKeyHold();
+		// Null check for level transitions before GameScene is created
+		if (cellSelector != null) {
+			cellSelector.processKeyHold();
+		}
 	}
-	
+
 	public static void resetKeyHold(){
-		cellSelector.resetKeyHold();
+		// Null check for level transitions before GameScene is created
+		if (cellSelector != null) {
+			cellSelector.resetKeyHold();
+		}
 	}
 
 	public static void examineCell( Integer cell ) {
@@ -1939,6 +1952,9 @@ public class GameScene extends PixelScene {
 		public void onSelect( Integer cell ) {
 			if (Dungeon.hero.handle( cell )) {
 				Dungeon.hero.next();
+				// BUG FIX #136: Match keyboard behavior - set ready=false after handling input
+				// This prevents heroWaiting blocking in Actor.process() when hero has pending action
+				Dungeon.hero.ready = false;
 			}
 		}
 

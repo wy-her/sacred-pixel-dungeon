@@ -939,10 +939,10 @@ public class Hero extends Char {
 		if(hasTalent(Talent.BARKSKIN) && Dungeon.level.map[pos] == Terrain.FURROWED_GRASS){
 			Barkskin.conditionallyAppend(this, (lvl*pointsInTalent(Talent.BARKSKIN))/2, 1 );
 		}
-		
+
 		return actResult;
 	}
-	
+
 	public void busy() {
 		ready = false;
 		//On HTML5, the hero may be marked waitingForCallback while waiting for input.
@@ -1307,7 +1307,6 @@ public class Hero extends Char {
 				sprite.attack(action.dst, new Callback() {
 					@Override
 					public void call() {
-
 						boolean crystalAdjacent = false;
 						for (int i : PathFinder.NEIGHBOURS8) {
 							if (Dungeon.level.map[action.dst + i] == Terrain.MINE_CRYSTAL){
@@ -1768,13 +1767,38 @@ public class Hero extends Char {
 		Char lastTarget = QuickSlotButton.lastTarget;
 		// Always update lastTarget so Spirit Bow auto-aim works.
 		// target() already checks targetingCancelled for TargetHealthIndicator display.
-		if (target != null && (lastTarget == null ||
-							!lastTarget.isAlive() || !lastTarget.isActive() ||
-							lastTarget.alignment == Alignment.ALLY ||
-							!fieldOfView[lastTarget.pos])){
-			QuickSlotButton.target(target);
+		try {
+			boolean shouldTarget = false;
+			if (target != null) {
+				if (lastTarget == null) {
+					shouldTarget = true;
+				} else {
+					if (!lastTarget.isAlive() || !lastTarget.isActive() ||
+								lastTarget.alignment == Alignment.ALLY ||
+								!fieldOfView[lastTarget.pos]) {
+						shouldTarget = true;
+					}
+				}
+			}
+			if (shouldTarget) {
+				// Force QuickSlotButton class initialization before calling target()
+				// This prevents TeaVM class loading issues during level transitions
+				try {
+					@SuppressWarnings("unused")
+					int dummy = QuickSlotButton.targetingSlot; // Access static field to force class init
+				} catch (Exception classInitEx) {
+					// Skip targeting if class can't be initialized (e.g., during level transition before GameScene)
+					shouldTarget = false;
+				}
+				if (shouldTarget) {
+					QuickSlotButton.target(target);
+				}
+			}
+		} catch (Exception e) {
+			// Don't re-throw during level transitions - targeting is not critical
+			// This prevents the entire level load from failing
 		}
-		
+
 		if (newMob) {
 			if (resting){
 				Dungeon.observe();
@@ -2020,15 +2044,15 @@ public class Hero extends Char {
 			curAction = new HeroAction.LvlTransition( cell );
 			
 		}  else {
-			
+
 			curAction = new HeroAction.Move( cell );
 			lastAction = null;
-			
+
 		}
 
 		return true;
 	}
-	
+
 	public void earnExp( int exp, Class source ) {
 
 		//xp granted by ascension challenge is only for on-exp gain effects

@@ -400,16 +400,26 @@ public class QuickSlotButton extends Button {
 	}
 	
 	public static void target( Char target ) {
-		if (target != null && target.alignment != Char.Alignment.ALLY) {
-			lastTarget = target;
-			// Don't reset targetingCancelled here - it should only be reset by
-			// useTargeting() (explicit user action) or reset() (level transition)
+		if (target == null) return;
+		if (target.alignment == Char.Alignment.ALLY) return;
 
-			// Only show health indicator if targeting wasn't explicitly cancelled
-			if (!targetingCancelled) {
-				TargetHealthIndicator.instance.target( target );
-			}
+		lastTarget = target;
+		// Don't reset targetingCancelled here - it should only be reset by
+		// useTargeting() (explicit user action) or reset() (level transition)
+
+		// Only show health indicator if targeting wasn't explicitly cancelled
+		// Also check that TargetHealthIndicator.instance exists (it's created by GameScene,
+		// but this method can be called during level transitions before GameScene is created)
+		TargetHealthIndicator indicator = TargetHealthIndicator.instance;
+		if (!targetingCancelled && indicator != null) {
+			indicator.target( target );
+		}
+		// InventoryPane may not be initialized during level transitions (before GameScene.create())
+		// Use try-catch to safely handle TeaVM class loading issues
+		try {
 			InventoryPane.lastTarget = target;
+		} catch (Exception e) {
+			// InventoryPane not yet initialized, ignore
 		}
 	}
 
@@ -428,7 +438,11 @@ public class QuickSlotButton extends Button {
 		}
 		targetingSlot = -1;
 		// Clear target health indicator to remove focusing mark
-		TargetHealthIndicator.instance.target(null);
+		// Check for null as this may be called before GameScene creates TargetHealthIndicator
+		TargetHealthIndicator indicator = TargetHealthIndicator.instance;
+		if (indicator != null) {
+			indicator.target(null);
+		}
 		// Mark targeting as cancelled to prevent auto-retargeting by checkVisibleMobs()
 		targetingCancelled = true;
 	}

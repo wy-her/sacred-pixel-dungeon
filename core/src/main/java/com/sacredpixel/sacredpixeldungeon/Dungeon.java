@@ -470,9 +470,9 @@ public class Dungeon {
 		if (pos < 0 || pos >= level.length() || level.invalidHeroPos(pos)){
 			pos = level.getTransition(null).cell();
 		}
-		
+
 		PathFinder.setMapSize(level.width(), level.height());
-		
+
 		Dungeon.level = level;
 		hero.pos = pos;
 
@@ -485,7 +485,7 @@ public class Dungeon {
 		Actor.init();
 
 		level.addRespawner();
-		
+
 		for(Mob m : level.mobs){
 			if (m.pos == hero.pos && !Char.hasProp(m, Char.Property.IMMOVABLE)){
 				//displace mob
@@ -497,10 +497,10 @@ public class Dungeon {
 				}
 			}
 		}
-		
+
 		Light light = hero.buff( Light.class );
 		hero.viewDistance = light == null ? level.viewDistance : Math.max( Light.DISTANCE, level.viewDistance );
-		
+
 		hero.curAction = hero.lastAction = null;
 		// Set ready to false so Hero.act() will call ready() method properly
 		// This ensures GameScene.ready() is called, which sets up the cell selector
@@ -508,12 +508,14 @@ public class Dungeon {
 		hero.ready = false;
 
 		observe();
+
 		// Sync hero's FOV reference and update visible enemies immediately after level transition
 		// This fixes the enemy indicator staying stuck at previous floor count
 		if (level != null && level.mobs != null) {
 			hero.fieldOfView = level.heroFOV;
 			hero.checkVisibleMobs();
 		}
+
 		try {
 			saveAll();
 		} catch (IOException e) {
