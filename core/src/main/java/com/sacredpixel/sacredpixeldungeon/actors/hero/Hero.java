@@ -1505,17 +1505,15 @@ public class Hero extends Char {
 			Buff.affect(Dungeon.hero, Talent.PatientStrikeTracker.class).pos = Dungeon.hero.pos;
 		}
 
-		// Prevent full rest when HP regeneration is not possible
+		// Prevent full rest only when regeneration is restricted or starving
+		// HP >= HT is allowed to enable artifact/wand charging while resting
 		if (fullRest) {
-			boolean canRegenerate = Regeneration.regenOn() && HP < HT && !isStarving();
-			if (!canRegenerate) {
+			if (!Regeneration.regenOn()) {
+				GLog.w(Messages.get(this, "no_rest_regen"));
 				fullRest = false;
-				if (!Regeneration.regenOn()) {
-					GLog.w(Messages.get(this, "no_rest_regen"));
-				} else if (isStarving()) {
-					GLog.w(Messages.get(this, "no_rest_starving"));
-				}
-				// If HP >= HT, silently convert to single wait (no message needed)
+			} else if (isStarving()) {
+				GLog.w(Messages.get(this, "no_rest_starving"));
+				fullRest = false;
 			}
 		}
 
