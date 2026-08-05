@@ -81,17 +81,9 @@ InterlevelScene의 스토리 키 리스너가 **모든** 키 릴리즈 이벤트
 | `Space` | 스페이스바 |
 | `SPDAction.BACK` | ESC, Backspace, Numpad Dot, Android Back |
 
-## 플랫폼별 동작 비교
-
-| 기능 | Cloudflare | 앱인토스 |
-|------|------------|----------|
-| 브라우저 뒤로 버튼 | 페이지 뒤로 이동 (기본 동작) | ESC 키로 매핑 (유지) |
-| 스토리 키 입력 | Enter/Space/Back만 허용 | Enter/Space/Back만 허용 |
-
 ## 영향
 
 - **Cloudflare**: 뒤로 버튼이 일반 브라우저처럼 작동 (이전 페이지로 이동)
-- **앱인토스**: 뒤로 버튼 ESC 매핑 기능 그대로 유지
 - **모든 플랫폼**: 예기치 않은 키 이벤트로 스토리가 넘어가지 않음
 
 ## 관련 변경

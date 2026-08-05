@@ -85,10 +85,8 @@ if (PathFinder.distance[target] == Integer.MAX_VALUE
 
 | 파일 | 경로 |
 |------|------|
-| Dirk.java (Sacred) | `core/.../items/weapon/melee/Dirk.java` |
-| Dagger.java (Sacred) | `core/.../items/weapon/melee/Dagger.java` |
-| Dirk.java (원본) | `wy/reference/shattered-pixel-dungeon-3.3.8/.../Dirk.java` |
-| Dagger.java (원본) | `wy/reference/shattered-pixel-dungeon-3.3.8/.../Dagger.java` |
+| Dirk.java | `core/.../items/weapon/melee/Dirk.java` |
+| Dagger.java | `core/.../items/weapon/melee/Dagger.java` |
 
 ---
 

@@ -25,6 +25,7 @@
 package com.sacredpixel.sacredpixeldungeon.tutorial;
 
 import com.sacredpixel.sacredpixeldungeon.Dungeon;
+import com.sacredpixel.sacredpixeldungeon.Promotion;
 import com.sacredpixel.sacredpixeldungeon.items.Heap;
 import com.sacredpixel.sacredpixeldungeon.messages.Messages;
 import com.sacredpixel.sacredpixeldungeon.items.Item;
@@ -42,7 +43,9 @@ import com.sacredpixel.sacredpixeldungeon.ui.Toolbar;
 import com.sacredpixel.sacredpixeldungeon.utils.GLog;
 import com.sacredpixel.sacredpixeldungeon.windows.WndStory;
 import com.sacredpixel.sacredpixeldungeon.windows.WndTutorial;
+import com.watabou.noosa.Game;
 import com.watabou.utils.Bundle;
+import com.watabou.utils.DeviceCompat;
 
 /**
  * Manages tutorial state and events.
@@ -297,6 +300,18 @@ public class TutorialManager {
 				if (state == TutorialState.GUIDEBOOK_PLACED) {
 					// Story window is shown automatically by Guidebook.doPickUp()
 					setState(TutorialState.INTRO_SHOWN);
+
+					// Grant tutorial step 1 reward (guidebook pickup) on Appsintoss platform
+					if (Promotion.isTutorialStep1Available()) {
+						Promotion.grantTutorialStep1Reward((success, message) -> {
+							// Silent callback - no UI feedback for test promotion
+							if (DeviceCompat.isDebug()) {
+								Game.runOnRenderThread(() -> {
+									DeviceCompat.log("TutorialStep1", "Promotion result: " + success + ", " + message);
+								});
+							}
+						});
+					}
 				}
 				break;
 

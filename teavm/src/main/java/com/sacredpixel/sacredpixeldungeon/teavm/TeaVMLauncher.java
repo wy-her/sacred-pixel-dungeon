@@ -63,8 +63,8 @@ public class TeaVMLauncher {
             log("TeaVMLauncher: compression disabled");
 
             // Game.version must be in x.x.x format for RankingsScene version display
-            Game.version = "4.5.0";
-            Game.versionCode = 950;
+            Game.version = "4.5.1";
+            Game.versionCode = 951;
             log("TeaVMLauncher: version set");
 
             if (UpdateImpl.supportsUpdates()) {

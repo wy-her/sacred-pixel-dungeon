@@ -30,12 +30,16 @@ Thumbs.db
 # Signing keys (NEVER commit to public repo)
 *.keystore
 *.jks
+*.pem
+*.key
 
 # Internal development files
 WY/
 wy/
 CLAUDE.md
 translation_checker.py
+appsintoss-app/
+tools/
 
 # Node modules (npm dependencies)
 node_modules/

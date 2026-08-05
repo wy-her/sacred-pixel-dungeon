@@ -72,13 +72,9 @@ Navigation API를 우선 사용하고, History API를 폴백으로 유지. 그�
 
 ## 기술적 세부사항
 - 파일: `teavm/webapp/index.html` (Cloudflare 버전)
-- 파일: `appsintoss-app/src/main.ts` (앱인토스 버전)
 - Navigation API의 `navigate` 이벤트는 히스토리 스택에 항목이 있어야 traverse로 인식
-- 중복 처리 방지를 위한 300ms 디바운스
-  - Cloudflare: `backHandled` 플래그 (index.html)
-  - 앱인토스: `BACK_EVENT_DEBOUNCE` 상수 (main.ts)
+- 중복 처리 방지를 위한 200ms 디바운스 (`backHandled` 플래그)
 
 ## 영향
 - 모든 브라우저(Chrome, Edge, Firefox, Samsung Internet)에서 뒤로 버튼이 ESC 키로 정상 매핑됨
 - Navigation API 지원 여부와 관계없이 안정적으로 동작
-- 앱인토스 `backEvent` 이중 발생 문제 완화

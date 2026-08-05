@@ -21,7 +21,6 @@
 ### 정상 동작 환경
 
 - 데스크탑 브라우저: 정상
-- Apps in Toss (WebView): 정상
 
 ---
 
@@ -271,6 +270,5 @@ private static native void notifyJavaMusicHookInstalled();
 - [ ] 모바일 브라우저: 음소거 해제 → BGM 복구
 - [ ] 모바일 브라우저: 인게임 BGM 정상 동작
 - [ ] 데스크탑 브라우저: 정상 동작 (회귀 없음)
-- [ ] Apps in Toss: 정상 동작 유지
 
 ---

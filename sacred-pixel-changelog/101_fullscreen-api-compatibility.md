@@ -10,7 +10,7 @@
 
 ## 변경 사항
 
-### Bug Fixes (3)
+### Bug Fixes (2)
 
 ---
 
@@ -120,33 +120,10 @@ csst_TeaVMPlatformSupport_jsRequestFullscreen$js_body$_4 = () => {
 
 ---
 
-### [B-3] appsintoss-app/index.html - iframe fullscreen 권한 추가
-
-**문제**: iframe 내에서 fullscreen API 호출 시 `NotAllowedError` 발생 가능
-
-**원인 분석**:
-- iframe에 `allow="fullscreen"` 속성 없음
-- 브라우저 보안 정책으로 iframe 내 fullscreen 차단
-
-**파일**: `appsintoss-app/index.html`
-
-**수정**: iframe에 `allow="fullscreen"` 속성 추가
-
-```html
-<!-- 이전 -->
-<iframe id="game-frame" src="game/index.html"></iframe>
-
-<!-- 수정 후 -->
-<iframe id="game-frame" src="game/index.html" allow="fullscreen"></iframe>
-```
-
----
-
 ## 수정된 파일
 
 | 파일 | 변경 내용 |
 |------|----------|
 | `teavm/.../TeaVMPlatformSupport.java:62-105` | 벤더 프리픽스 폴백 + IIFE 제거 + Promise 호환성 |
-| `appsintoss-app/index.html:158` | iframe fullscreen 권한 추가 |
 
 ---

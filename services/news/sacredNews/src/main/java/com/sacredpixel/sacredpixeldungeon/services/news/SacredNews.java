@@ -41,74 +41,9 @@ public class SacredNews extends NewsService {
 
 	@Override
 	public void checkForArticles(boolean useMetered, boolean preferHTTPS, NewsResultCallback callback) {
-
-		if (!useMetered && !Game.platform.connectedToUnmeteredNetwork()){
-			callback.onConnectionFailed();
-			return;
-		}
-
-		Net.HttpRequest httpGet = new Net.HttpRequest(Net.HttpMethods.GET);
-		// Always use HTTPS for security (HTTP fallback removed)
-		httpGet.setUrl("https://shatteredpixel.com/feed_by_tag/SHPD_INGAME.xml");
-
-		Gdx.net.sendHttpRequest(httpGet, new Net.HttpResponseListener() {
-			@Override
-			public void handleHttpResponse(Net.HttpResponse httpResponse) {
-				ArrayList<NewsArticle> articles = new ArrayList<>();
-				XmlReader reader = new XmlReader();
-				XmlReader.Element xmlDoc = reader.parse(httpResponse.getResultAsStream());
-
-				SimpleDateFormat dateParser = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-
-				for (XmlReader.Element xmlArticle : xmlDoc.getChildrenByName("entry")){
-					NewsArticle article = new NewsArticle();
-					article.title = xmlArticle.get("title");
-					try {
-						article.date = dateParser.parse(xmlArticle.get("published"));
-					} catch (ParseException e) {
-						Game.reportException(e);
-					}
-					article.summary = xmlArticle.get("summary");
-					article.URL = xmlArticle.getChildByName("link").getAttribute("href");
-					// Ensure HTTPS is always used
-					if (article.URL != null && article.URL.startsWith("http://")) {
-						article.URL = article.URL.replace("http://", "https://");
-					}
-
-					Pattern versionCodeMatcher = Pattern.compile("v[0-9]+");
-					try {
-						Array<XmlReader.Element> properties = xmlArticle.getChildrenByName("category");
-						for (XmlReader.Element prop : properties){
-							String propVal = prop.getAttribute("term");
-							if (propVal.startsWith("SHPD_ICON")){
-								Matcher m = versionCodeMatcher.matcher(propVal);
-								if (m.find()) {
-									int iconGameVer = Integer.parseInt(m.group().substring(1));
-									if (iconGameVer <= Game.versionCode) {
-										article.icon = propVal.substring(propVal.indexOf(": ") + 2);
-									}
-								}
-							}
-						}
-					} catch (Exception e){
-						article.icon = null;
-					}
-
-					articles.add(article);
-				}
-				callback.onArticlesFound(articles);
-			}
-
-			@Override
-			public void failed(Throwable t) {
-				callback.onConnectionFailed();
-			}
-
-			@Override
-			public void cancelled() {
-				callback.onConnectionFailed();
-			}
-		});
+		// News feature is currently disabled for Sacred Pixel Dungeon
+		// Return empty article list to gracefully disable without breaking UI
+		callback.onArticlesFound(new ArrayList<>());
 	}
 
 }

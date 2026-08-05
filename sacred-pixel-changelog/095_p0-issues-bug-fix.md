@@ -88,17 +88,7 @@ synchronized (saveLock) {
 }
 ```
 
-#### [H-7/H-16] TeaVMInterstitialAd.java - Event Listener Memory Leak
-- **File**: `teavm/src/main/java/.../teavm/TeaVMInterstitialAd.java:138-164`
-- **Issue**: Event listeners registered but never removed, causing memory leak
-- **Fix**: Added `removeEventListener` calls in callback completion paths
-
-```javascript
-// Added in 2 places
-window.removeEventListener('message', msgHandler);
-```
-
-#### [H-11] PointerEvent.java - Y-Coordinate Typo
+#### [H-7] PointerEvent.java - Y-Coordinate Typo
 - **File**: `SPD-classes/src/main/java/com/watabou/input/PointerEvent.java:67`
 - **Issue**: Copy-paste error using `Game.width` instead of `Game.height` for y-coordinate
 - **Fix**: Changed to `Game.height/2`
@@ -120,7 +110,6 @@ y = Game.height/2;
 | `BitmapText.java` | NPE crash fix (line 125-127) |
 | `GnollGeomancer.java` | hasSapper() null safety, array bounds check |
 | `TeaVMLauncher.java` | Save race condition fix, version update |
-| `TeaVMInterstitialAd.java` | Event listener memory leak fix |
 | `PointerEvent.java` | Y-coordinate typo fix |
 | `build.gradle` | Version update (902, 4.0.3) |
 

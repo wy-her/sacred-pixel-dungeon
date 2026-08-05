@@ -34,6 +34,7 @@ import com.sacredpixel.sacredpixeldungeon.SacredPixelDungeon;
 import com.sacredpixel.sacredpixeldungeon.SPDAction;
 import com.sacredpixel.sacredpixeldungeon.SPDSettings;
 import com.sacredpixel.sacredpixeldungeon.Statistics;
+import com.sacredpixel.sacredpixeldungeon.Promotion;
 import com.sacredpixel.sacredpixeldungeon.actors.Actor;
 import com.sacredpixel.sacredpixeldungeon.actors.buffs.Buff;
 import com.sacredpixel.sacredpixeldungeon.actors.mobs.Mob;
@@ -1034,6 +1035,19 @@ public class InterlevelScene extends PixelScene {
 			Level level = new com.sacredpixel.sacredpixeldungeon.levels.TutorialLevel();
 			level.create();
 			Dungeon.switchLevel(level, level.entrance());
+
+			// Grant tutorial entry reward on Appsintoss platform (test promotion)
+			if (Promotion.isTutorialEntryAvailable()) {
+				Promotion.grantTutorialEntryReward((success, message) -> {
+					// Silent callback - no UI feedback for test promotion
+					if (DeviceCompat.isDebug()) {
+						Game.runOnRenderThread(() -> {
+							DeviceCompat.log("TutorialEntry", "Promotion result: " + success + ", " + message);
+						});
+					}
+				});
+			}
+
 			return;
 		}
 

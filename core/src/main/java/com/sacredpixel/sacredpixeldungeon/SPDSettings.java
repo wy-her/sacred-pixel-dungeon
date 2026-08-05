@@ -527,4 +527,80 @@ public class SPDSettings extends GameSettings {
 	public static boolean thirdPlayPromotionPending(){
 		return getBoolean( KEY_THIRD_PLAY_PROMO_PENDING, false );
 	}
+
+	// ==================== Streak Promotion Tracking ====================
+	// Tracks consecutive days with 3+ plays for 10-day and 30-day streak promotions
+
+	public static final String KEY_STREAK_LAST_PLAY_DATE = "streak_last_play_date";
+	public static final String KEY_STREAK_CONSECUTIVE_DAYS = "streak_consecutive_days";
+	public static final String KEY_STREAK_PLAYS_TODAY = "streak_plays_today";
+	public static final String KEY_STREAK_10_CLAIMED = "streak_10_promo_claimed";
+	public static final String KEY_STREAK_30_CLAIMED = "streak_30_promo_claimed";
+
+	/**
+	 * Get the last play date (YYYYMMDD format).
+	 */
+	public static int streakLastPlayDate(){
+		return getInt( KEY_STREAK_LAST_PLAY_DATE, 0 );
+	}
+
+	public static void streakLastPlayDate( int value ){
+		put( KEY_STREAK_LAST_PLAY_DATE, value );
+	}
+
+	/**
+	 * Get the number of consecutive days with 3+ plays.
+	 */
+	public static int streakConsecutiveDays(){
+		return getInt( KEY_STREAK_CONSECUTIVE_DAYS, 0 );
+	}
+
+	public static void streakConsecutiveDays( int value ){
+		put( KEY_STREAK_CONSECUTIVE_DAYS, value );
+	}
+
+	/**
+	 * Get the number of plays today.
+	 */
+	public static int streakPlaysToday(){
+		return getInt( KEY_STREAK_PLAYS_TODAY, 0 );
+	}
+
+	public static void streakPlaysToday( int value ){
+		put( KEY_STREAK_PLAYS_TODAY, value );
+	}
+
+	/**
+	 * Check if 10-day streak promotion has been claimed.
+	 */
+	public static boolean streak10PromotionClaimed(){
+		return getBoolean( KEY_STREAK_10_CLAIMED, false );
+	}
+
+	public static void streak10PromotionClaimed( boolean value ){
+		put( KEY_STREAK_10_CLAIMED, value );
+	}
+
+	/**
+	 * Check if 30-day streak promotion has been claimed.
+	 */
+	public static boolean streak30PromotionClaimed(){
+		return getBoolean( KEY_STREAK_30_CLAIMED, false );
+	}
+
+	public static void streak30PromotionClaimed( boolean value ){
+		put( KEY_STREAK_30_CLAIMED, value );
+	}
+
+	// ==================== All Classes Victory Promotion Tracking ====================
+
+	public static final String KEY_ALL_CLASSES_PROMO_CLAIMED = "all_classes_promo_claimed";
+
+	public static boolean allClassesPromotionClaimed(){
+		return getBoolean( KEY_ALL_CLASSES_PROMO_CLAIMED, false );
+	}
+
+	public static void allClassesPromotionClaimed( boolean value ){
+		put( KEY_ALL_CLASSES_PROMO_CLAIMED, value );
+	}
 }

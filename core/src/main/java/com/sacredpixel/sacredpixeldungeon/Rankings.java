@@ -42,6 +42,7 @@ import com.sacredpixel.sacredpixeldungeon.items.trinkets.Trinket;
 import com.sacredpixel.sacredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.sacredpixel.sacredpixeldungeon.journal.Notes;
 import com.sacredpixel.sacredpixeldungeon.levels.TestLevel;
+import com.sacredpixel.sacredpixeldungeon.levels.TutorialLevel;
 import com.sacredpixel.sacredpixeldungeon.messages.Messages;
 import com.sacredpixel.sacredpixeldungeon.ui.QuickSlotButton;
 import com.sacredpixel.sacredpixeldungeon.ui.Toolbar;
@@ -173,9 +174,11 @@ public enum Rankings {
 
 		Badges.validateGamesPlayed();
 
-		// Increment run count for interstitial ad tracking (excludes TestLevel runs)
-		if (!(Dungeon.level instanceof TestLevel)) {
+		// Increment run count for interstitial ad tracking (excludes TestLevel and TutorialLevel runs)
+		if (!(Dungeon.level instanceof TestLevel) && !(Dungeon.level instanceof TutorialLevel)) {
 			SPDSettings.incrementRunCountSinceAd();
+			// Update streak tracking for consecutive daily play promotions
+			updateStreakTracking();
 		}
 
 		// Submit score to Appsintoss leaderboard (only for non-custom-seed runs)
@@ -765,4 +768,94 @@ public enum Rankings {
 			return result;
 		}
 	};
+
+	// ==================== Streak Tracking for Consecutive Daily Plays ====================
+
+	/**
+	 * Updates streak tracking for consecutive daily play promotions.
+	 * Called when a game ends (victory or death), not when it starts.
+	 *
+	 * Streak logic:
+	 * - Each completed game (victory or death) counts as a "play"
+	 * - If 3+ plays in a day, that day counts toward the streak
+	 * - Consecutive days must be unbroken (no missed days)
+	 * - 10-day streak: 100 won reward
+	 * - 30-day streak: 500 won reward
+	 */
+	private static void updateStreakTracking() {
+		// Get today's date as YYYYMMDD integer
+		java.util.Calendar cal = java.util.Calendar.getInstance();
+		int today = cal.get(java.util.Calendar.YEAR) * 10000
+				+ (cal.get(java.util.Calendar.MONTH) + 1) * 100
+				+ cal.get(java.util.Calendar.DAY_OF_MONTH);
+
+		int lastPlayDate = SPDSettings.streakLastPlayDate();
+		int consecutiveDays = SPDSettings.streakConsecutiveDays();
+		int playsToday = SPDSettings.streakPlaysToday();
+
+		if (lastPlayDate == today) {
+			// Same day: increment plays today
+			playsToday++;
+		} else if (lastPlayDate > 0) {
+			// Different day: check if it's yesterday
+			cal.add(java.util.Calendar.DAY_OF_MONTH, -1);
+			int yesterday = cal.get(java.util.Calendar.YEAR) * 10000
+					+ (cal.get(java.util.Calendar.MONTH) + 1) * 100
+					+ cal.get(java.util.Calendar.DAY_OF_MONTH);
+
+			if (lastPlayDate == yesterday) {
+				// Yesterday: check if we had 3+ plays
+				if (SPDSettings.streakPlaysToday() >= 3) {
+					// Yesterday qualified, increment consecutive days
+					consecutiveDays++;
+				} else {
+					// Yesterday didn't qualify, reset streak
+					consecutiveDays = 0;
+				}
+			} else {
+				// More than 1 day gap: reset streak
+				consecutiveDays = 0;
+			}
+			// Start new day's count
+			playsToday = 1;
+		} else {
+			// First ever play
+			consecutiveDays = 0;
+			playsToday = 1;
+		}
+
+		// Save updated values
+		SPDSettings.streakLastPlayDate(today);
+		SPDSettings.streakConsecutiveDays(consecutiveDays);
+		SPDSettings.streakPlaysToday(playsToday);
+
+		// Check for promotion rewards when reaching 3 plays today
+		if (playsToday == 3) {
+			// Today now qualifies - check if we've reached streak milestones
+			// Note: consecutiveDays doesn't include today yet, so we check consecutiveDays + 1
+			int totalStreakDays = consecutiveDays + 1;
+
+			// 10-day streak promotion (100 won)
+			if (totalStreakDays >= 10
+					&& !SPDSettings.streak10PromotionClaimed()
+					&& Promotion.isStreak10Available()) {
+				Promotion.grantStreak10Reward((success, message) -> {
+					if (success) {
+						SPDSettings.streak10PromotionClaimed(true);
+					}
+				});
+			}
+
+			// 30-day streak promotion (500 won)
+			if (totalStreakDays >= 30
+					&& !SPDSettings.streak30PromotionClaimed()
+					&& Promotion.isStreak30Available()) {
+				Promotion.grantStreak30Reward((success, message) -> {
+					if (success) {
+						SPDSettings.streak30PromotionClaimed(true);
+					}
+				});
+			}
+		}
+	}
 }

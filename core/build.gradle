@@ -9,26 +9,66 @@ dependencies {
 }
 
 // Load promotion config from local.properties
-def promotionCode = "DISABLED"
-def promotionAmount = 0
+def tutorialCompleteCode = "DISABLED"
+def tutorialCompleteAmount = 0
+def tutorialStep1Code = "DISABLED"
+def tutorialStep1Amount = 0
+def tutorialEntryCode = "DISABLED"
+def tutorialEntryAmount = 0
 def thirdPlayCode = "DISABLED"
 def thirdPlayAmount = 0
+def streak10Code = "DISABLED"
+def streak10Amount = 0
+def streak30Code = "DISABLED"
+def streak30Amount = 0
+def allClassesCode = "DISABLED"
+def allClassesAmount = 0
 
 def localPropsFile = rootProject.file('local.properties')
 if (localPropsFile.exists()) {
     def localProps = new Properties()
     localProps.load(new FileInputStream(localPropsFile))
-    if (localProps.containsKey('promotion.code')) {
-        promotionCode = localProps.getProperty('promotion.code')
+    if (localProps.containsKey('promotion.tutorial.complete.code')) {
+        tutorialCompleteCode = localProps.getProperty('promotion.tutorial.complete.code')
     }
-    if (localProps.containsKey('promotion.amount')) {
-        promotionAmount = Integer.parseInt(localProps.getProperty('promotion.amount'))
+    if (localProps.containsKey('promotion.tutorial.complete.amount')) {
+        tutorialCompleteAmount = Integer.parseInt(localProps.getProperty('promotion.tutorial.complete.amount'))
+    }
+    if (localProps.containsKey('promotion.tutorial.step1.code')) {
+        tutorialStep1Code = localProps.getProperty('promotion.tutorial.step1.code')
+    }
+    if (localProps.containsKey('promotion.tutorial.step1.amount')) {
+        tutorialStep1Amount = Integer.parseInt(localProps.getProperty('promotion.tutorial.step1.amount'))
+    }
+    if (localProps.containsKey('promotion.tutorial.entry.code')) {
+        tutorialEntryCode = localProps.getProperty('promotion.tutorial.entry.code')
+    }
+    if (localProps.containsKey('promotion.tutorial.entry.amount')) {
+        tutorialEntryAmount = Integer.parseInt(localProps.getProperty('promotion.tutorial.entry.amount'))
     }
     if (localProps.containsKey('promotion.thirdplay.code')) {
         thirdPlayCode = localProps.getProperty('promotion.thirdplay.code')
     }
     if (localProps.containsKey('promotion.thirdplay.amount')) {
         thirdPlayAmount = Integer.parseInt(localProps.getProperty('promotion.thirdplay.amount'))
+    }
+    if (localProps.containsKey('promotion.streak10.code')) {
+        streak10Code = localProps.getProperty('promotion.streak10.code')
+    }
+    if (localProps.containsKey('promotion.streak10.amount')) {
+        streak10Amount = Integer.parseInt(localProps.getProperty('promotion.streak10.amount'))
+    }
+    if (localProps.containsKey('promotion.streak30.code')) {
+        streak30Code = localProps.getProperty('promotion.streak30.code')
+    }
+    if (localProps.containsKey('promotion.streak30.amount')) {
+        streak30Amount = Integer.parseInt(localProps.getProperty('promotion.streak30.amount'))
+    }
+    if (localProps.containsKey('promotion.allclasses.code')) {
+        allClassesCode = localProps.getProperty('promotion.allclasses.code')
+    }
+    if (localProps.containsKey('promotion.allclasses.amount')) {
+        allClassesAmount = Integer.parseInt(localProps.getProperty('promotion.allclasses.amount'))
     }
 }
 
@@ -48,11 +88,33 @@ task generatePromotionConfig {
 package com.sacredpixel.sacredpixeldungeon;
 
 public final class PromotionConfig {
-    public static final String TUTORIAL_PROMO_CODE = "${promotionCode}";
-    public static final int TUTORIAL_REWARD_AMOUNT = ${promotionAmount};
+    // Tutorial completion reward (test)
+    public static final String TUTORIAL_COMPLETE_PROMO_CODE = "${tutorialCompleteCode}";
+    public static final int TUTORIAL_COMPLETE_REWARD_AMOUNT = ${tutorialCompleteAmount};
 
+    // Tutorial step 1 reward (guidebook pickup)
+    public static final String TUTORIAL_STEP1_PROMO_CODE = "${tutorialStep1Code}";
+    public static final int TUTORIAL_STEP1_REWARD_AMOUNT = ${tutorialStep1Amount};
+
+    // Tutorial entry reward
+    public static final String TUTORIAL_ENTRY_PROMO_CODE = "${tutorialEntryCode}";
+    public static final int TUTORIAL_ENTRY_REWARD_AMOUNT = ${tutorialEntryAmount};
+
+    // Third play reward
     public static final String THIRD_PLAY_PROMO_CODE = "${thirdPlayCode}";
     public static final int THIRD_PLAY_REWARD_AMOUNT = ${thirdPlayAmount};
+
+    // 10-day streak reward
+    public static final String STREAK_10_PROMO_CODE = "${streak10Code}";
+    public static final int STREAK_10_REWARD_AMOUNT = ${streak10Amount};
+
+    // 30-day streak reward
+    public static final String STREAK_30_PROMO_CODE = "${streak30Code}";
+    public static final int STREAK_30_REWARD_AMOUNT = ${streak30Amount};
+
+    // All Classes Victory badge reward
+    public static final String ALL_CLASSES_PROMO_CODE = "${allClassesCode}";
+    public static final int ALL_CLASSES_REWARD_AMOUNT = ${allClassesAmount};
 
     private PromotionConfig() {}
 }

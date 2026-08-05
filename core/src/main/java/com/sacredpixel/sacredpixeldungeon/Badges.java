@@ -1053,8 +1053,21 @@ public class Badges {
 			}
 		}
 		if (allUnlocked){
+			// Check if VICTORY_ALL_CLASSES is being unlocked for the first time
+			boolean wasUnlocked = isUnlocked(Badge.VICTORY_ALL_CLASSES);
 			badge = Badge.VICTORY_ALL_CLASSES;
 			displayBadge( badge );
+
+			// Grant All Classes Victory promotion if first time unlocking
+			if (!wasUnlocked
+					&& !SPDSettings.allClassesPromotionClaimed()
+					&& Promotion.isAllClassesAvailable()) {
+				Promotion.grantAllClassesReward((success, message) -> {
+					if (success) {
+						SPDSettings.allClassesPromotionClaimed(true);
+					}
+				});
+			}
 		}
 	}
 
@@ -1113,7 +1126,7 @@ public class Badges {
 			unlock(badge);
 			badge = Badge.GAMES_PLAYED_5;
 		}
-		
+
 		displayBadge( badge );
 	}
 

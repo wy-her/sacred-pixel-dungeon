@@ -49,14 +49,6 @@ public static Action action;  // ← static 필드
 ```diff
 + import com.sacredpixel.sacredpixeldungeon.ui.ActionIndicator;
 
-  // 광고 경로 (InterstitialAd.show() 내부)
-  Dungeon.initSeed();
-
-+ // Clear any lingering action from previous game (e.g., MonkEnergy)
-+ ActionIndicator.clearAction();
-  InterlevelScene.mode = InterlevelScene.Mode.DESCEND;
-
-  // 직접 경로 (else 블록)
   Dungeon.initSeed();
 
 + // Clear any lingering action from previous game (e.g., MonkEnergy)
@@ -71,8 +63,7 @@ public static Action action;  // ← static 필드
 | 파일 | 변경 내용 |
 |------|----------|
 | `windows/WndRanking.java:60` | `ActionIndicator` import 추가 |
-| `windows/WndRanking.java:557-558` | 광고 경로에 `clearAction()` 호출 추가 |
-| `windows/WndRanking.java:575-576` | 직접 경로에 `clearAction()` 호출 추가 |
+| `windows/WndRanking.java:557-576` | "다시 플레이하기" 경로에 `clearAction()` 호출 추가 |
 
 ---
 
