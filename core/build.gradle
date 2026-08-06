@@ -13,6 +13,10 @@ def tutorialCompleteCode = "DISABLED"
 def tutorialCompleteAmount = 0
 def tutorialStep1Code = "DISABLED"
 def tutorialStep1Amount = 0
+def tutorialStep2Code = "DISABLED"
+def tutorialStep2Amount = 0
+def tutorialStep3Code = "DISABLED"
+def tutorialStep3Amount = 0
 def tutorialEntryCode = "DISABLED"
 def tutorialEntryAmount = 0
 def thirdPlayCode = "DISABLED"
@@ -23,6 +27,16 @@ def streak30Code = "DISABLED"
 def streak30Amount = 0
 def allClassesCode = "DISABLED"
 def allClassesAmount = 0
+def jackOfAllTradesCode = "DISABLED"
+def jackOfAllTradesAmount = 0
+def champion1Code = "DISABLED"
+def champion1Amount = 0
+def champion2Code = "DISABLED"
+def champion2Amount = 0
+def champion3Code = "DISABLED"
+def champion3Amount = 0
+def takingTheMickCode = "DISABLED"
+def takingTheMickAmount = 0
 
 def localPropsFile = rootProject.file('local.properties')
 if (localPropsFile.exists()) {
@@ -39,6 +53,18 @@ if (localPropsFile.exists()) {
     }
     if (localProps.containsKey('promotion.tutorial.step1.amount')) {
         tutorialStep1Amount = Integer.parseInt(localProps.getProperty('promotion.tutorial.step1.amount'))
+    }
+    if (localProps.containsKey('promotion.tutorial.step2.code')) {
+        tutorialStep2Code = localProps.getProperty('promotion.tutorial.step2.code')
+    }
+    if (localProps.containsKey('promotion.tutorial.step2.amount')) {
+        tutorialStep2Amount = Integer.parseInt(localProps.getProperty('promotion.tutorial.step2.amount'))
+    }
+    if (localProps.containsKey('promotion.tutorial.step3.code')) {
+        tutorialStep3Code = localProps.getProperty('promotion.tutorial.step3.code')
+    }
+    if (localProps.containsKey('promotion.tutorial.step3.amount')) {
+        tutorialStep3Amount = Integer.parseInt(localProps.getProperty('promotion.tutorial.step3.amount'))
     }
     if (localProps.containsKey('promotion.tutorial.entry.code')) {
         tutorialEntryCode = localProps.getProperty('promotion.tutorial.entry.code')
@@ -70,6 +96,36 @@ if (localPropsFile.exists()) {
     if (localProps.containsKey('promotion.allclasses.amount')) {
         allClassesAmount = Integer.parseInt(localProps.getProperty('promotion.allclasses.amount'))
     }
+    if (localProps.containsKey('promotion.jackofalltrades.code')) {
+        jackOfAllTradesCode = localProps.getProperty('promotion.jackofalltrades.code')
+    }
+    if (localProps.containsKey('promotion.jackofalltrades.amount')) {
+        jackOfAllTradesAmount = Integer.parseInt(localProps.getProperty('promotion.jackofalltrades.amount'))
+    }
+    if (localProps.containsKey('promotion.champion1.code')) {
+        champion1Code = localProps.getProperty('promotion.champion1.code')
+    }
+    if (localProps.containsKey('promotion.champion1.amount')) {
+        champion1Amount = Integer.parseInt(localProps.getProperty('promotion.champion1.amount'))
+    }
+    if (localProps.containsKey('promotion.champion2.code')) {
+        champion2Code = localProps.getProperty('promotion.champion2.code')
+    }
+    if (localProps.containsKey('promotion.champion2.amount')) {
+        champion2Amount = Integer.parseInt(localProps.getProperty('promotion.champion2.amount'))
+    }
+    if (localProps.containsKey('promotion.champion3.code')) {
+        champion3Code = localProps.getProperty('promotion.champion3.code')
+    }
+    if (localProps.containsKey('promotion.champion3.amount')) {
+        champion3Amount = Integer.parseInt(localProps.getProperty('promotion.champion3.amount'))
+    }
+    if (localProps.containsKey('promotion.takingthemick.code')) {
+        takingTheMickCode = localProps.getProperty('promotion.takingthemick.code')
+    }
+    if (localProps.containsKey('promotion.takingthemick.amount')) {
+        takingTheMickAmount = Integer.parseInt(localProps.getProperty('promotion.takingthemick.amount'))
+    }
 }
 
 // Generate PromotionConfig.java
@@ -96,6 +152,14 @@ public final class PromotionConfig {
     public static final String TUTORIAL_STEP1_PROMO_CODE = "${tutorialStep1Code}";
     public static final int TUTORIAL_STEP1_REWARD_AMOUNT = ${tutorialStep1Amount};
 
+    // Tutorial step 2 reward (rat killed)
+    public static final String TUTORIAL_STEP2_PROMO_CODE = "${tutorialStep2Code}";
+    public static final int TUTORIAL_STEP2_REWARD_AMOUNT = ${tutorialStep2Amount};
+
+    // Tutorial step 3 reward (snake killed)
+    public static final String TUTORIAL_STEP3_PROMO_CODE = "${tutorialStep3Code}";
+    public static final int TUTORIAL_STEP3_REWARD_AMOUNT = ${tutorialStep3Amount};
+
     // Tutorial entry reward
     public static final String TUTORIAL_ENTRY_PROMO_CODE = "${tutorialEntryCode}";
     public static final int TUTORIAL_ENTRY_REWARD_AMOUNT = ${tutorialEntryAmount};
@@ -115,6 +179,26 @@ public final class PromotionConfig {
     // All Classes Victory badge reward
     public static final String ALL_CLASSES_PROMO_CODE = "${allClassesCode}";
     public static final int ALL_CLASSES_REWARD_AMOUNT = ${allClassesAmount};
+
+    // Jack of All Trades badge reward (BOSS_SLAIN_3_ALL_SUBCLASSES - 만물 박사)
+    public static final String JACK_OF_ALL_TRADES_PROMO_CODE = "${jackOfAllTradesCode}";
+    public static final int JACK_OF_ALL_TRADES_REWARD_AMOUNT = ${jackOfAllTradesAmount};
+
+    // Champion 1 badge reward (Bronze - 1+ challenges)
+    public static final String CHAMPION_1_PROMO_CODE = "${champion1Code}";
+    public static final int CHAMPION_1_REWARD_AMOUNT = ${champion1Amount};
+
+    // Champion 2 badge reward (Silver - 3+ challenges)
+    public static final String CHAMPION_2_PROMO_CODE = "${champion2Code}";
+    public static final int CHAMPION_2_REWARD_AMOUNT = ${champion2Amount};
+
+    // Champion 3 badge reward (Gold - 6+ challenges)
+    public static final String CHAMPION_3_PROMO_CODE = "${champion3Code}";
+    public static final int CHAMPION_3_REWARD_AMOUNT = ${champion3Amount};
+
+    // Taking the Mick badge reward
+    public static final String TAKING_THE_MICK_PROMO_CODE = "${takingTheMickCode}";
+    public static final int TAKING_THE_MICK_REWARD_AMOUNT = ${takingTheMickAmount};
 
     private PromotionConfig() {}
 }

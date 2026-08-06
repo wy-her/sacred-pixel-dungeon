@@ -49,6 +49,14 @@ public class Promotion {
     public static final int TUTORIAL_STEP1_REWARD_AMOUNT = PromotionConfig.TUTORIAL_STEP1_REWARD_AMOUNT;
     public static final String TUTORIAL_STEP1_PROMO_CODE = PromotionConfig.TUTORIAL_STEP1_PROMO_CODE;
 
+    // Tutorial step 2 reward (rat killed - first combat)
+    public static final int TUTORIAL_STEP2_REWARD_AMOUNT = PromotionConfig.TUTORIAL_STEP2_REWARD_AMOUNT;
+    public static final String TUTORIAL_STEP2_PROMO_CODE = PromotionConfig.TUTORIAL_STEP2_PROMO_CODE;
+
+    // Tutorial step 3 reward (snake killed - surprise attack learned)
+    public static final int TUTORIAL_STEP3_REWARD_AMOUNT = PromotionConfig.TUTORIAL_STEP3_REWARD_AMOUNT;
+    public static final String TUTORIAL_STEP3_PROMO_CODE = PromotionConfig.TUTORIAL_STEP3_PROMO_CODE;
+
     // Tutorial entry reward (granted when entering tutorial level)
     public static final int TUTORIAL_ENTRY_REWARD_AMOUNT = PromotionConfig.TUTORIAL_ENTRY_REWARD_AMOUNT;
     public static final String TUTORIAL_ENTRY_PROMO_CODE = PromotionConfig.TUTORIAL_ENTRY_PROMO_CODE;
@@ -68,6 +76,26 @@ public class Promotion {
     // All Classes Victory badge reward (VICTORY_ALL_CLASSES)
     public static final int ALL_CLASSES_REWARD_AMOUNT = PromotionConfig.ALL_CLASSES_REWARD_AMOUNT;
     public static final String ALL_CLASSES_PROMO_CODE = PromotionConfig.ALL_CLASSES_PROMO_CODE;
+
+    // Jack of All Trades badge reward (BOSS_SLAIN_3_ALL_SUBCLASSES - 만물 박사)
+    public static final int JACK_OF_ALL_TRADES_REWARD_AMOUNT = PromotionConfig.JACK_OF_ALL_TRADES_REWARD_AMOUNT;
+    public static final String JACK_OF_ALL_TRADES_PROMO_CODE = PromotionConfig.JACK_OF_ALL_TRADES_PROMO_CODE;
+
+    // Champion 1 badge reward (Bronze - 1+ challenges)
+    public static final int CHAMPION_1_REWARD_AMOUNT = PromotionConfig.CHAMPION_1_REWARD_AMOUNT;
+    public static final String CHAMPION_1_PROMO_CODE = PromotionConfig.CHAMPION_1_PROMO_CODE;
+
+    // Champion 2 badge reward (Silver - 3+ challenges)
+    public static final int CHAMPION_2_REWARD_AMOUNT = PromotionConfig.CHAMPION_2_REWARD_AMOUNT;
+    public static final String CHAMPION_2_PROMO_CODE = PromotionConfig.CHAMPION_2_PROMO_CODE;
+
+    // Champion 3 badge reward (Gold - 6+ challenges)
+    public static final int CHAMPION_3_REWARD_AMOUNT = PromotionConfig.CHAMPION_3_REWARD_AMOUNT;
+    public static final String CHAMPION_3_PROMO_CODE = PromotionConfig.CHAMPION_3_PROMO_CODE;
+
+    // Taking the Mick badge reward
+    public static final int TAKING_THE_MICK_REWARD_AMOUNT = PromotionConfig.TAKING_THE_MICK_REWARD_AMOUNT;
+    public static final String TAKING_THE_MICK_PROMO_CODE = PromotionConfig.TAKING_THE_MICK_PROMO_CODE;
 
     // Prevent duplicate requests while one is in flight
     private static boolean rewardInFlight = false;
@@ -202,6 +230,116 @@ public class Promotion {
         rewardInFlight = true;
 
         impl.grantReward(TUTORIAL_STEP1_PROMO_CODE, TUTORIAL_STEP1_REWARD_AMOUNT, (success, message) -> {
+            rewardInFlight = false;
+            if (callback != null) {
+                callback.onResult(success, message);
+            }
+        });
+    }
+
+    // ==================== Tutorial Step 2 Promotion (Rat Killed) ====================
+
+    /**
+     * Check if tutorial step 2 promotion is properly configured in build.
+     */
+    public static boolean isTutorialStep2Configured() {
+        return TUTORIAL_STEP2_REWARD_AMOUNT > 0
+                && TUTORIAL_STEP2_PROMO_CODE != null
+                && !TUTORIAL_STEP2_PROMO_CODE.isEmpty()
+                && !"DISABLED".equals(TUTORIAL_STEP2_PROMO_CODE);
+    }
+
+    /**
+     * Check if tutorial step 2 promotion is available.
+     */
+    public static boolean isTutorialStep2Available() {
+        return isTutorialStep2Configured() && impl != null && impl.isAvailable();
+    }
+
+    /**
+     * Grant tutorial step 2 reward (rat killed - first combat).
+     * Only works on Appsintoss platform.
+     */
+    public static void grantTutorialStep2Reward(RewardCallback callback) {
+        if (!isTutorialStep2Configured()) {
+            if (callback != null) {
+                callback.onResult(false, "Tutorial step 2 promotion is not configured");
+            }
+            return;
+        }
+
+        if (impl == null || !impl.isAvailable()) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion API is not available");
+            }
+            return;
+        }
+
+        if (rewardInFlight) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion reward request is already in progress");
+            }
+            return;
+        }
+
+        rewardInFlight = true;
+
+        impl.grantReward(TUTORIAL_STEP2_PROMO_CODE, TUTORIAL_STEP2_REWARD_AMOUNT, (success, message) -> {
+            rewardInFlight = false;
+            if (callback != null) {
+                callback.onResult(success, message);
+            }
+        });
+    }
+
+    // ==================== Tutorial Step 3 Promotion (Snake Killed) ====================
+
+    /**
+     * Check if tutorial step 3 promotion is properly configured in build.
+     */
+    public static boolean isTutorialStep3Configured() {
+        return TUTORIAL_STEP3_REWARD_AMOUNT > 0
+                && TUTORIAL_STEP3_PROMO_CODE != null
+                && !TUTORIAL_STEP3_PROMO_CODE.isEmpty()
+                && !"DISABLED".equals(TUTORIAL_STEP3_PROMO_CODE);
+    }
+
+    /**
+     * Check if tutorial step 3 promotion is available.
+     */
+    public static boolean isTutorialStep3Available() {
+        return isTutorialStep3Configured() && impl != null && impl.isAvailable();
+    }
+
+    /**
+     * Grant tutorial step 3 reward (snake killed - surprise attack learned).
+     * Only works on Appsintoss platform.
+     */
+    public static void grantTutorialStep3Reward(RewardCallback callback) {
+        if (!isTutorialStep3Configured()) {
+            if (callback != null) {
+                callback.onResult(false, "Tutorial step 3 promotion is not configured");
+            }
+            return;
+        }
+
+        if (impl == null || !impl.isAvailable()) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion API is not available");
+            }
+            return;
+        }
+
+        if (rewardInFlight) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion reward request is already in progress");
+            }
+            return;
+        }
+
+        rewardInFlight = true;
+
+        impl.grantReward(TUTORIAL_STEP3_PROMO_CODE, TUTORIAL_STEP3_REWARD_AMOUNT, (success, message) -> {
             rewardInFlight = false;
             if (callback != null) {
                 callback.onResult(success, message);
@@ -473,6 +611,281 @@ public class Promotion {
         rewardInFlight = true;
 
         impl.grantReward(ALL_CLASSES_PROMO_CODE, ALL_CLASSES_REWARD_AMOUNT, (success, message) -> {
+            rewardInFlight = false;
+            if (callback != null) {
+                callback.onResult(success, message);
+            }
+        });
+    }
+
+    // ==================== Jack of All Trades Badge Promotion (BOSS_SLAIN_3_ALL_SUBCLASSES - 만물 박사) ====================
+
+    /**
+     * Check if Jack of All Trades (만물 박사) badge promotion is properly configured in build.
+     */
+    public static boolean isJackOfAllTradesConfigured() {
+        return JACK_OF_ALL_TRADES_REWARD_AMOUNT > 0
+                && JACK_OF_ALL_TRADES_PROMO_CODE != null
+                && !JACK_OF_ALL_TRADES_PROMO_CODE.isEmpty()
+                && !"DISABLED".equals(JACK_OF_ALL_TRADES_PROMO_CODE);
+    }
+
+    /**
+     * Check if Jack of All Trades badge promotion is available.
+     */
+    public static boolean isJackOfAllTradesAvailable() {
+        return isJackOfAllTradesConfigured() && impl != null && impl.isAvailable();
+    }
+
+    /**
+     * Grant Jack of All Trades (만물 박사) badge reward (BOSS_SLAIN_3_ALL_SUBCLASSES).
+     * Only works on Appsintoss platform.
+     */
+    public static void grantJackOfAllTradesReward(RewardCallback callback) {
+        if (!isJackOfAllTradesConfigured()) {
+            if (callback != null) {
+                callback.onResult(false, "Jack of All Trades promotion is not configured");
+            }
+            return;
+        }
+
+        if (impl == null || !impl.isAvailable()) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion API is not available");
+            }
+            return;
+        }
+
+        if (rewardInFlight) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion reward request is already in progress");
+            }
+            return;
+        }
+
+        rewardInFlight = true;
+
+        impl.grantReward(JACK_OF_ALL_TRADES_PROMO_CODE, JACK_OF_ALL_TRADES_REWARD_AMOUNT, (success, message) -> {
+            rewardInFlight = false;
+            if (callback != null) {
+                callback.onResult(success, message);
+            }
+        });
+    }
+
+    // ==================== Champion 1 Badge Promotion (Bronze - 1+ challenges) ====================
+
+    /**
+     * Check if Champion 1 badge promotion is properly configured in build.
+     */
+    public static boolean isChampion1Configured() {
+        return CHAMPION_1_REWARD_AMOUNT > 0
+                && CHAMPION_1_PROMO_CODE != null
+                && !CHAMPION_1_PROMO_CODE.isEmpty()
+                && !"DISABLED".equals(CHAMPION_1_PROMO_CODE);
+    }
+
+    /**
+     * Check if Champion 1 badge promotion is available.
+     */
+    public static boolean isChampion1Available() {
+        return isChampion1Configured() && impl != null && impl.isAvailable();
+    }
+
+    /**
+     * Grant Champion 1 badge reward (Bronze - 1+ challenges).
+     * Only works on Appsintoss platform.
+     */
+    public static void grantChampion1Reward(RewardCallback callback) {
+        if (!isChampion1Configured()) {
+            if (callback != null) {
+                callback.onResult(false, "Champion 1 promotion is not configured");
+            }
+            return;
+        }
+
+        if (impl == null || !impl.isAvailable()) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion API is not available");
+            }
+            return;
+        }
+
+        if (rewardInFlight) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion reward request is already in progress");
+            }
+            return;
+        }
+
+        rewardInFlight = true;
+
+        impl.grantReward(CHAMPION_1_PROMO_CODE, CHAMPION_1_REWARD_AMOUNT, (success, message) -> {
+            rewardInFlight = false;
+            if (callback != null) {
+                callback.onResult(success, message);
+            }
+        });
+    }
+
+    // ==================== Champion 2 Badge Promotion (Silver - 3+ challenges) ====================
+
+    /**
+     * Check if Champion 2 badge promotion is properly configured in build.
+     */
+    public static boolean isChampion2Configured() {
+        return CHAMPION_2_REWARD_AMOUNT > 0
+                && CHAMPION_2_PROMO_CODE != null
+                && !CHAMPION_2_PROMO_CODE.isEmpty()
+                && !"DISABLED".equals(CHAMPION_2_PROMO_CODE);
+    }
+
+    /**
+     * Check if Champion 2 badge promotion is available.
+     */
+    public static boolean isChampion2Available() {
+        return isChampion2Configured() && impl != null && impl.isAvailable();
+    }
+
+    /**
+     * Grant Champion 2 badge reward (Silver - 3+ challenges).
+     * Only works on Appsintoss platform.
+     */
+    public static void grantChampion2Reward(RewardCallback callback) {
+        if (!isChampion2Configured()) {
+            if (callback != null) {
+                callback.onResult(false, "Champion 2 promotion is not configured");
+            }
+            return;
+        }
+
+        if (impl == null || !impl.isAvailable()) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion API is not available");
+            }
+            return;
+        }
+
+        if (rewardInFlight) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion reward request is already in progress");
+            }
+            return;
+        }
+
+        rewardInFlight = true;
+
+        impl.grantReward(CHAMPION_2_PROMO_CODE, CHAMPION_2_REWARD_AMOUNT, (success, message) -> {
+            rewardInFlight = false;
+            if (callback != null) {
+                callback.onResult(success, message);
+            }
+        });
+    }
+
+    // ==================== Champion 3 Badge Promotion (Gold - 6+ challenges) ====================
+
+    /**
+     * Check if Champion 3 badge promotion is properly configured in build.
+     */
+    public static boolean isChampion3Configured() {
+        return CHAMPION_3_REWARD_AMOUNT > 0
+                && CHAMPION_3_PROMO_CODE != null
+                && !CHAMPION_3_PROMO_CODE.isEmpty()
+                && !"DISABLED".equals(CHAMPION_3_PROMO_CODE);
+    }
+
+    /**
+     * Check if Champion 3 badge promotion is available.
+     */
+    public static boolean isChampion3Available() {
+        return isChampion3Configured() && impl != null && impl.isAvailable();
+    }
+
+    /**
+     * Grant Champion 3 badge reward (Gold - 6+ challenges).
+     * Only works on Appsintoss platform.
+     */
+    public static void grantChampion3Reward(RewardCallback callback) {
+        if (!isChampion3Configured()) {
+            if (callback != null) {
+                callback.onResult(false, "Champion 3 promotion is not configured");
+            }
+            return;
+        }
+
+        if (impl == null || !impl.isAvailable()) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion API is not available");
+            }
+            return;
+        }
+
+        if (rewardInFlight) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion reward request is already in progress");
+            }
+            return;
+        }
+
+        rewardInFlight = true;
+
+        impl.grantReward(CHAMPION_3_PROMO_CODE, CHAMPION_3_REWARD_AMOUNT, (success, message) -> {
+            rewardInFlight = false;
+            if (callback != null) {
+                callback.onResult(success, message);
+            }
+        });
+    }
+
+    // ==================== Taking the Mick Badge Promotion ====================
+
+    /**
+     * Check if Taking the Mick badge promotion is properly configured in build.
+     */
+    public static boolean isTakingTheMickConfigured() {
+        return TAKING_THE_MICK_REWARD_AMOUNT > 0
+                && TAKING_THE_MICK_PROMO_CODE != null
+                && !TAKING_THE_MICK_PROMO_CODE.isEmpty()
+                && !"DISABLED".equals(TAKING_THE_MICK_PROMO_CODE);
+    }
+
+    /**
+     * Check if Taking the Mick badge promotion is available.
+     */
+    public static boolean isTakingTheMickAvailable() {
+        return isTakingTheMickConfigured() && impl != null && impl.isAvailable();
+    }
+
+    /**
+     * Grant Taking the Mick badge reward.
+     * Only works on Appsintoss platform.
+     */
+    public static void grantTakingTheMickReward(RewardCallback callback) {
+        if (!isTakingTheMickConfigured()) {
+            if (callback != null) {
+                callback.onResult(false, "Taking the Mick promotion is not configured");
+            }
+            return;
+        }
+
+        if (impl == null || !impl.isAvailable()) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion API is not available");
+            }
+            return;
+        }
+
+        if (rewardInFlight) {
+            if (callback != null) {
+                callback.onResult(false, "Promotion reward request is already in progress");
+            }
+            return;
+        }
+
+        rewardInFlight = true;
+
+        impl.grantReward(TAKING_THE_MICK_PROMO_CODE, TAKING_THE_MICK_REWARD_AMOUNT, (success, message) -> {
             rewardInFlight = false;
             if (callback != null) {
                 callback.onResult(success, message);

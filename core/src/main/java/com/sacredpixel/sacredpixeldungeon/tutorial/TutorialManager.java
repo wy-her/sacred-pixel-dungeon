@@ -370,6 +370,19 @@ public class TutorialManager {
 			case RAT_KILLED:
 				if (state == TutorialState.RAT_COMBAT) {
 					stopFlashAttack();
+
+					// Grant tutorial step 2 reward (rat killed - first combat) on Appsintoss platform
+					if (Promotion.isTutorialStep2Available()) {
+						Promotion.grantTutorialStep2Reward((success, message) -> {
+							// Silent callback - no UI feedback for test promotion
+							if (DeviceCompat.isDebug()) {
+								Game.runOnRenderThread(() -> {
+									DeviceCompat.log("TutorialStep2", "Promotion result: " + success + ", " + message);
+								});
+							}
+						});
+					}
+
 					// Wait for hero to move 5 times before showing identification guide and spawning liquid flame potion
 					setState(TutorialState.LIQUID_FLAME_HINT);
 					moveCounter = 0;
@@ -464,6 +477,19 @@ public class TutorialManager {
 			case SNAKE_KILLED:
 				if (state == TutorialState.SNAKE_AT_DOOR) {
 					stopFlashAttack();
+
+					// Grant tutorial step 3 reward (snake killed - surprise attack learned) on Appsintoss platform
+					if (Promotion.isTutorialStep3Available()) {
+						Promotion.grantTutorialStep3Reward((success, message) -> {
+							// Silent callback - no UI feedback for test promotion
+							if (DeviceCompat.isDebug()) {
+								Game.runOnRenderThread(() -> {
+									DeviceCompat.log("TutorialStep3", "Promotion result: " + success + ", " + message);
+								});
+							}
+						});
+					}
+
 					// Show completion immediately
 					setState(TutorialState.COMPLETED);
 					GameScene.show(WndTutorial.createCompletion());

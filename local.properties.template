@@ -3,5 +3,45 @@
 # local.properties is in .gitignore and will not be committed
 
 # Appsintoss Promotion Config
-promotion.code=YOUR_PROMOTION_CODE_HERE
-promotion.amount=0
+
+# Tutorial promotions
+promotion.tutorial.entry.code=DISABLED
+promotion.tutorial.entry.amount=0
+promotion.tutorial.step1.code=DISABLED
+promotion.tutorial.step1.amount=0
+promotion.tutorial.step2.code=DISABLED
+promotion.tutorial.step2.amount=0
+promotion.tutorial.step3.code=DISABLED
+promotion.tutorial.step3.amount=0
+promotion.tutorial.complete.code=DISABLED
+promotion.tutorial.complete.amount=0
+
+# Third play reward (3rd game start)
+promotion.thirdplay.code=DISABLED
+promotion.thirdplay.amount=0
+
+# Streak rewards (consecutive daily plays)
+promotion.streak10.code=DISABLED
+promotion.streak10.amount=0
+promotion.streak30.code=DISABLED
+promotion.streak30.amount=0
+
+# All classes victory reward (VICTORY_ALL_CLASSES - win with all 6 classes)
+promotion.allclasses.code=DISABLED
+promotion.allclasses.amount=0
+
+# Jack of All Trades reward (BOSS_SLAIN_3_ALL_SUBCLASSES - 만물 박사 - beat boss 3 with all 12 subclasses)
+promotion.jackofalltrades.code=DISABLED
+promotion.jackofalltrades.amount=0
+
+# Champion badges rewards (win with challenges enabled)
+promotion.champion1.code=DISABLED
+promotion.champion1.amount=0
+promotion.champion2.code=DISABLED
+promotion.champion2.amount=0
+promotion.champion3.code=DISABLED
+promotion.champion3.amount=0
+
+# Taking the Mick reward (kill Yog with +20 pickaxe)
+promotion.takingthemick.code=DISABLED
+promotion.takingthemick.amount=0

@@ -603,4 +603,64 @@ public class SPDSettings extends GameSettings {
 	public static void allClassesPromotionClaimed( boolean value ){
 		put( KEY_ALL_CLASSES_PROMO_CLAIMED, value );
 	}
+
+	// ==================== Jack of All Trades Promotion Tracking ====================
+
+	public static final String KEY_JACK_OF_ALL_TRADES_PROMO_CLAIMED = "jack_of_all_trades_promo_claimed";
+
+	public static boolean jackOfAllTradesPromotionClaimed(){
+		return getBoolean( KEY_JACK_OF_ALL_TRADES_PROMO_CLAIMED, false );
+	}
+
+	public static void jackOfAllTradesPromotionClaimed( boolean value ){
+		put( KEY_JACK_OF_ALL_TRADES_PROMO_CLAIMED, value );
+	}
+
+	// ==================== Champion 1 Promotion Tracking ====================
+
+	public static final String KEY_CHAMPION_1_PROMO_CLAIMED = "champion_1_promo_claimed";
+
+	public static boolean champion1PromotionClaimed(){
+		return getBoolean( KEY_CHAMPION_1_PROMO_CLAIMED, false );
+	}
+
+	public static void champion1PromotionClaimed( boolean value ){
+		put( KEY_CHAMPION_1_PROMO_CLAIMED, value );
+	}
+
+	// ==================== Champion 2 Promotion Tracking ====================
+
+	public static final String KEY_CHAMPION_2_PROMO_CLAIMED = "champion_2_promo_claimed";
+
+	public static boolean champion2PromotionClaimed(){
+		return getBoolean( KEY_CHAMPION_2_PROMO_CLAIMED, false );
+	}
+
+	public static void champion2PromotionClaimed( boolean value ){
+		put( KEY_CHAMPION_2_PROMO_CLAIMED, value );
+	}
+
+	// ==================== Champion 3 Promotion Tracking ====================
+
+	public static final String KEY_CHAMPION_3_PROMO_CLAIMED = "champion_3_promo_claimed";
+
+	public static boolean champion3PromotionClaimed(){
+		return getBoolean( KEY_CHAMPION_3_PROMO_CLAIMED, false );
+	}
+
+	public static void champion3PromotionClaimed( boolean value ){
+		put( KEY_CHAMPION_3_PROMO_CLAIMED, value );
+	}
+
+	// ==================== Taking the Mick Promotion Tracking ====================
+
+	public static final String KEY_TAKING_THE_MICK_PROMO_CLAIMED = "taking_the_mick_promo_claimed";
+
+	public static boolean takingTheMickPromotionClaimed(){
+		return getBoolean( KEY_TAKING_THE_MICK_PROMO_CLAIMED, false );
+	}
+
+	public static void takingTheMickPromotionClaimed( boolean value ){
+		put( KEY_TAKING_THE_MICK_PROMO_CLAIMED, value );
+	}
 }

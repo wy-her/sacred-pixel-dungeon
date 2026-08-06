@@ -885,7 +885,7 @@ public class Badges {
 					}
 				}
 				if (allUnlocked) {
-					
+
 					badge = Badge.BOSS_SLAIN_1_ALL_CLASSES;
 					if (!isUnlocked( badge )) {
 						displayBadge( badge );
@@ -907,8 +907,20 @@ public class Badges {
 				}
 				if (allUnlocked) {
 					badge = Badge.BOSS_SLAIN_3_ALL_SUBCLASSES;
-					if (!isUnlocked( badge )) {
+					boolean wasUnlocked = isUnlocked( badge );
+					if (!wasUnlocked) {
 						displayBadge( badge );
+					}
+
+					// Grant Jack of All Trades (만물 박사) promotion if first time unlocking
+					if (!wasUnlocked
+							&& !SPDSettings.jackOfAllTradesPromotionClaimed()
+							&& Promotion.isJackOfAllTradesAvailable()) {
+						Promotion.grantJackOfAllTradesReward((success, message) -> {
+							if (success) {
+								SPDSettings.jackOfAllTradesPromotionClaimed(true);
+							}
+						});
 					}
 				}
 			}
@@ -1075,8 +1087,21 @@ public class Badges {
 		if ((cause == Dungeon.hero || cause instanceof Explosive.ExplosiveCurseBomb)
 				&& Dungeon.hero.belongings.attackingWeapon() instanceof Pickaxe
 				&& Dungeon.hero.belongings.attackingWeapon().level() >= 20){
+
+			boolean wasUnlocked = isUnlocked(Badge.TAKING_THE_MICK);
 			local.add( Badge.TAKING_THE_MICK );
 			displayBadge(Badge.TAKING_THE_MICK);
+
+			// Grant Taking the Mick promotion if first time unlocking
+			if (!wasUnlocked
+					&& !SPDSettings.takingTheMickPromotionClaimed()
+					&& Promotion.isTakingTheMickAvailable()) {
+				Promotion.grantTakingTheMickReward((success, message) -> {
+					if (success) {
+						SPDSettings.takingTheMickPromotionClaimed(true);
+					}
+				});
+			}
 		}
 	}
 
@@ -1178,6 +1203,12 @@ public class Badges {
 	public static void validateChampion( int challenges ) {
 		if (challenges == 0) return;
 		Badge badge = null;
+
+		// Track which badges were already unlocked before this validation
+		boolean wasChampion1Unlocked = isUnlocked(Badge.CHAMPION_1);
+		boolean wasChampion2Unlocked = isUnlocked(Badge.CHAMPION_2);
+		boolean wasChampion3Unlocked = isUnlocked(Badge.CHAMPION_3);
+
 		if (challenges >= 1) {
 			badge = Badge.CHAMPION_1;
 		}
@@ -1191,6 +1222,42 @@ public class Badges {
 		}
 		local.add(badge);
 		displayBadge( badge );
+
+		// Grant Champion 1 promotion if first time unlocking
+		if (!wasChampion1Unlocked
+				&& isUnlocked(Badge.CHAMPION_1)
+				&& !SPDSettings.champion1PromotionClaimed()
+				&& Promotion.isChampion1Available()) {
+			Promotion.grantChampion1Reward((success, message) -> {
+				if (success) {
+					SPDSettings.champion1PromotionClaimed(true);
+				}
+			});
+		}
+
+		// Grant Champion 2 promotion if first time unlocking
+		if (!wasChampion2Unlocked
+				&& isUnlocked(Badge.CHAMPION_2)
+				&& !SPDSettings.champion2PromotionClaimed()
+				&& Promotion.isChampion2Available()) {
+			Promotion.grantChampion2Reward((success, message) -> {
+				if (success) {
+					SPDSettings.champion2PromotionClaimed(true);
+				}
+			});
+		}
+
+		// Grant Champion 3 promotion if first time unlocking
+		if (!wasChampion3Unlocked
+				&& isUnlocked(Badge.CHAMPION_3)
+				&& !SPDSettings.champion3PromotionClaimed()
+				&& Promotion.isChampion3Available()) {
+			Promotion.grantChampion3Reward((success, message) -> {
+				if (success) {
+					SPDSettings.champion3PromotionClaimed(true);
+				}
+			});
+		}
 	}
 	
 	private static void displayBadge( Badge badge ) {
