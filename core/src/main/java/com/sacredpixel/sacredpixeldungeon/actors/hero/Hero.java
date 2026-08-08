@@ -985,6 +985,16 @@ public class Hero extends Char {
 		if (waitingForCallback) {
 			waitingForCallback = false;
 		}
+
+		// 능력 상태 정리: abilityWeapon과 애니메이션 콜백
+		// - 대부분의 경우 이미 null이므로 부작용 없음
+		// - Rapier/Katana 런지 중 interrupt 시 잔존 상태 정리
+		if (belongings.abilityWeapon != null) {
+			belongings.abilityWeapon = null;
+		}
+		if (sprite != null) {
+			sprite.cancelAnimCallback();
+		}
 	}
 	
 	public void resume() {

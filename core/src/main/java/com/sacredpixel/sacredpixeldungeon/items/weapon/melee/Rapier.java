@@ -144,10 +144,21 @@ public class Rapier extends MeleeWeapon {
 				Dungeon.observe();
 
 				hero.belongings.abilityWeapon = wep; //set this early to we can check canAttack
+
 				if (enemy != null && hero.canAttack(enemy)) {
 					hero.sprite.attack(enemy.pos, new Callback() {
 						@Override
 						public void call() {
+							// 방어적 검사: 콜백 실행 시점에 상태가 변경된 경우 조기 종료
+							if (!hero.isAlive()) {
+								hero.belongings.abilityWeapon = null;
+								return;
+							}
+							if (enemy == null || !enemy.isAlive() || !Actor.chars().contains(enemy)) {
+								hero.belongings.abilityWeapon = null;
+								hero.spendAndNext(hero.attackDelay());
+								return;
+							}
 
 							wep.beforeAbilityUsed(hero, enemy);
 							AttackIndicator.target(enemy);
@@ -164,6 +175,7 @@ public class Rapier extends MeleeWeapon {
 					});
 				} else {
 					//spends charge but otherwise does not count as an ability use
+					hero.belongings.abilityWeapon = null;
 					Charger charger = Buff.affect(hero, Charger.class);
 					charger.partialCharge -= 1;
 					while (charger.partialCharge < 0 && charger.charges > 0) {

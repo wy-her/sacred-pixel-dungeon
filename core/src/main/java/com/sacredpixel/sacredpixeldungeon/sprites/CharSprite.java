@@ -321,6 +321,37 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 		turnTo( from, to );
 	}
 
+	/**
+	 * 진행 중인 점프를 취소하고 sprite를 ch.pos로 복귀시킵니다.
+	 * jumpCallback은 호출되지 않습니다.
+	 */
+	public void cancelJump() {
+		if (jumpTweener != null) {
+			if (ch != null) {
+				point(worldToCamera(ch.pos));  // 시작 위치로 sprite 복귀
+			}
+			shadowOffset = 0.25f;  // 기본값 복원
+			jumpTweener.killAndErase();
+			jumpTweener = null;
+		}
+		jumpCallback = null;
+	}
+
+	/**
+	 * 현재 설정된 애니메이션 콜백을 취소합니다.
+	 * onComplete()에서 콜백이 실행되지 않습니다.
+	 */
+	public void cancelAnimCallback() {
+		animCallback = null;
+	}
+
+	/**
+	 * 점프가 현재 진행 중인지 확인합니다.
+	 */
+	public boolean isJumping() {
+		return jumpTweener != null;
+	}
+
 	public void die() {
 		sleeping = false;
 		processStateRemoval( State.PARALYSED );
