@@ -340,15 +340,15 @@ public abstract class Mob extends Char {
 			if ( buff(Amok.class) != null) {
 				//try to find an enemy mob to attack first.
 				for (Mob mob : Dungeon.level.mobs)
-					if (mob.alignment == Alignment.ENEMY && mob != this
+					if (mob.alignment == Alignment.ENEMY && mob != this && mob.isAlive()
 							&& fieldOfView[mob.pos] && mob.invisible <= 0) {
 						enemies.add(mob);
 					}
-				
+
 				if (enemies.isEmpty()) {
 					//try to find ally mobs to attack second.
 					for (Mob mob : Dungeon.level.mobs)
-						if (mob.alignment == Alignment.ALLY && mob != this
+						if (mob.alignment == Alignment.ALLY && mob != this && mob.isAlive()
 								&& fieldOfView[mob.pos] && mob.invisible <= 0) {
 							enemies.add(mob);
 						}
@@ -365,7 +365,7 @@ public abstract class Mob extends Char {
 			} else if ( alignment == Alignment.ALLY ) {
 				//look for hostile mobs to attack
 				for (Mob mob : Dungeon.level.mobs)
-					if (mob.alignment == Alignment.ENEMY && fieldOfView[mob.pos]
+					if (mob.alignment == Alignment.ENEMY && mob.isAlive() && fieldOfView[mob.pos]
 							&& mob.invisible <= 0 && !mob.isInvulnerable(getClass()))
 						//do not target passive mobs
 						//intelligent allies also don't target mobs which are wandering or asleep
@@ -378,7 +378,7 @@ public abstract class Mob extends Char {
 			} else if (alignment == Alignment.ENEMY) {
 				//look for ally mobs to attack
 				for (Mob mob : Dungeon.level.mobs)
-					if (mob.alignment == Alignment.ALLY && fieldOfView[mob.pos] && mob.invisible <= 0)
+					if (mob.alignment == Alignment.ALLY && mob.isAlive() && fieldOfView[mob.pos] && mob.invisible <= 0)
 						enemies.add(mob);
 
 				//and look for the hero
@@ -440,8 +440,9 @@ public abstract class Mob extends Char {
 				return closest;
 			}
 
-		} else
+		} else {
 			return enemy;
+		}
 	}
 	
 	@Override
@@ -662,7 +663,6 @@ public abstract class Mob extends Char {
 	}
 	
 	protected boolean doAttack( Char enemy ) {
-
 		// Use heroFOV (game state) instead of sprite.visible (render state)
 		// to avoid FOV boundary race conditions on HTML5
 		boolean inFOV = Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[enemy.pos];

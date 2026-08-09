@@ -966,6 +966,8 @@ public class Hero extends Char {
 	}
 	
 	public void interrupt() {
+		boolean wasResting = resting;
+
 		if (isAlive() && curAction != null &&
 			((curAction instanceof HeroAction.Move && curAction.dst != pos) ||
 			(curAction instanceof HeroAction.LvlTransition))) {
@@ -975,6 +977,15 @@ public class Hero extends Char {
 		path = null;
 		GameScene.resetKeyHold();
 		resting = false;
+
+		//On HTML5, reset hero's time when interrupted from resting.
+		//During rest, hero accumulates time (spends TIME_TO_REST each turn), which puts
+		//them behind enemies in turn order. By setting hero.time to before the minimum,
+		//the hero acts before all enemies after being interrupted.
+		if (wasResting) {
+			timeToBeforeMin();
+		}
+
 		recentlyInterrupted = true;
 		if (sprite != null && !sprite.isMoving) {
 			sprite.idle();
