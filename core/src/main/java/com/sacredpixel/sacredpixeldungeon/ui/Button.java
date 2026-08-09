@@ -305,6 +305,11 @@ public class Button extends Component implements Focusable {
 	
 	@Override
 	public synchronized void destroy () {
+		// Fix: Clear pressedButton if this button is being destroyed while pressed
+		// This prevents permanent button freeze when a button is destroyed mid-click
+		if (pressedButton == this) {
+			pressedButton = null;
+		}
 		super.destroy();
 		KeyEvent.removeKeyListener( keyListener );
 		killTooltip();
