@@ -313,7 +313,6 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 
 	public void jump( int from, int to, float height, float duration,  Callback callback ) {
 		jumpCallback = callback;
-
 		jumpTweener = new JumpTweener( this, worldToCamera( to ), height, duration );
 		jumpTweener.listener = this;
 		parent.add( jumpTweener );
@@ -328,9 +327,9 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 	public void cancelJump() {
 		if (jumpTweener != null) {
 			if (ch != null) {
-				point(worldToCamera(ch.pos));  // 시작 위치로 sprite 복귀
+				point(worldToCamera(ch.pos));
 			}
-			shadowOffset = 0.25f;  // 기본값 복원
+			shadowOffset = 0.25f;
 			jumpTweener.killAndErase();
 			jumpTweener = null;
 		}
@@ -863,7 +862,15 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 				GameScene.ripple( ch.pos );
 			}
 			if (jumpCallback != null) {
-				jumpCallback.call();
+				Callback cb = jumpCallback;
+				jumpCallback = null;
+				// 점프 완료 후 jumpTweener 정리 (콜백 실행 전)
+				jumpTweener.killAndErase();
+				jumpTweener = null;
+				cb.call();
+			} else {
+				jumpTweener.killAndErase();
+				jumpTweener = null;
 			}
 			GameScene.sortMobSprites();
 

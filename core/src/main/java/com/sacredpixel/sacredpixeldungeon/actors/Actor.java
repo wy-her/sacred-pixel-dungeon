@@ -532,14 +532,6 @@ public abstract class Actor implements Bundlable {
 				//even though they're ready to receive input. (#147)
 				if (ThreadCompat.currentThread() == null && current != null) {
 					boolean isHeroWaitingForInput = (current == Dungeon.hero && Dungeon.hero.ready);
-					// DEBUG: Log when waitingForCallback is being set for Hero
-					if (current == Dungeon.hero) {
-						com.watabou.utils.DeviceCompat.log("CALLBACK_DEBUG", "Actor.process(): Hero doNext=false"
-							+ ", hero.ready=" + Dungeon.hero.ready
-							+ ", isHeroWaitingForInput=" + isHeroWaitingForInput
-							+ ", willSetWaitingForCallback=" + !isHeroWaitingForInput
-						);
-					}
 					if (!isHeroWaitingForInput) {
 						current.waitingForCallback = true;
 					}

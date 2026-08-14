@@ -173,7 +173,8 @@ public class MeleeWeapon extends Weapon {
 		hero.belongings.abilityWeapon = this;
 		Charger charger = Buff.affect(hero, Charger.class);
 
-		charger.partialCharge -= abilityChargeUse(hero, target);
+		float chargeUse = abilityChargeUse(hero, target);
+		charger.partialCharge -= chargeUse;
 		while (charger.partialCharge < 0 && charger.charges > 0) {
 			charger.charges--;
 			charger.partialCharge++;

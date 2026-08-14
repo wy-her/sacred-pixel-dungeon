@@ -133,6 +133,7 @@ public class Rapier extends MeleeWeapon {
 
 		hero.busy();
 		Sample.INSTANCE.play(Assets.Sounds.MISS);
+
 		hero.sprite.jump(hero.pos, dest, 0, 0.1f, new Callback() {
 			@Override
 			public void call() {
