@@ -31,7 +31,6 @@ import com.sacredpixel.sacredpixeldungeon.Challenges;
 import com.sacredpixel.sacredpixeldungeon.Chrome;
 import com.sacredpixel.sacredpixeldungeon.Dungeon;
 import com.sacredpixel.sacredpixeldungeon.GamesInProgress;
-import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
 import com.sacredpixel.sacredpixeldungeon.Promotion;
 import com.sacredpixel.sacredpixeldungeon.Rankings;
 import com.sacredpixel.sacredpixeldungeon.Review;
@@ -895,9 +894,6 @@ public class GameScene extends PixelScene {
 	@Override
 	public synchronized void update() {
 		lastOffset = null;
-
-		// Poll for interstitial ad completion callback
-		InterstitialAd.checkCallback();
 
 		//Reset observe dedup counter at the start of each frame
 		Dungeon.resetObserveDedup();

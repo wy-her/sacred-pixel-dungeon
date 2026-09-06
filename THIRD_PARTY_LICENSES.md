@@ -91,7 +91,7 @@ This project is licensed under **GPL-3.0**. All third-party dependencies use com
 
 ### Apps-in-Toss SDK
 
-- **Version:** 2.6.1
+- **Version:** 2.10.6
 - **License:** GPL-3.0 License
 - **Copyright:** 2025 Viva Republica, Inc.
 - **Website:** https://developers-apps-in-toss.toss.im/

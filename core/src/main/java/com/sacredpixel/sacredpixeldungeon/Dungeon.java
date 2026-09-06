@@ -232,9 +232,6 @@ public class Dungeon {
 		Actor.clear();
 		Actor.resetNextID();
 
-		// Reset ad blocking state for new game
-		InterstitialAd.resetBlock();
-
 		//offset seed slightly to avoid output patterns
 		Random.pushGenerator( seed+1 );
 

@@ -1,4 +1,4 @@
-import { TossAds, setDeviceOrientation, setScreenAwakeMode, loadFullScreenAd, showFullScreenAd, graniteEvent, setIosSwipeGestureEnabled, SafeAreaInsets, grantPromotionRewardForGame, requestReview } from '@apps-in-toss/web-framework';
+import { TossAds, setDeviceOrientation, setScreenAwakeMode, graniteEvent, setIosSwipeGestureEnabled, SafeAreaInsets, grantPromotionRewardForGame, requestReview } from '@apps-in-toss/web-framework';
 import { closeView } from '@apps-in-toss/web-bridge';
 import { initFirebase, loadCloudData, saveCloudData, type CloudSaveData } from './firebase';
 
@@ -15,51 +15,38 @@ setScreenAwakeMode({ enabled: true });
 // iOS 스와이프 뒤로가기 제스처 비활성화 (앱인토스 요구사항)
 setIosSwipeGestureEnabled({ isEnabled: false });
 
-// 네비게이션 바 설정 (방어적 코드 - API 존재 여부 확인)
-import('@apps-in-toss/web-framework').then(sdk => {
-    // setConfig 존재 확인 후 네비게이션 바 활성화
-    if (typeof (sdk as any).setConfig === 'function') {
-        (sdk as any).setConfig({
-            navigationBar: {
-                visible: true,
-            }
-        });
-        console.log('Navigation bar configured');
-    } else {
-        console.log('setConfig not available - navigation bar may use default settings');
-    }
-}).catch(e => {
-    console.warn('SDK config not available:', e);
-});
+// 내비게이션 바 설정은 granite.config.ts의 navigationBar가 소유한다.
+// (SDK에 setConfig API는 존재하지 않는다)
 
 // SafeAreaInsets 적용
-// SDK 2.10.5+에서는 네비게이션 바 높이가 SafeAreaInsets.top에 포함됨
-// 하지만 네이티브 네비게이션 바가 이미 표시되면 WebView는 그 아래에서 시작하므로
-// 추가 padding이 필요 없음 (중복 방지)
-function applySafeAreaInsets() {
+// granite.config.ts에서 navigationBar.transparentBackground = true로 설정했으므로
+// WebView가 화면 최상단(y=0)부터 시작한다. 따라서 상태바 높이만큼만 직접 내려준다.
+//
+// SafeAreaInsets.top은 상태바(노치 포함) 높이만 담고 있으며 내비게이션 바는 포함하지 않는다.
+// 내비게이션 바(더보기/X 버튼)와 배너가 겹치는 것은 의도된 동작이다.
+//
+// 주의: transparentBackground와 이 padding은 반드시 함께 가야 한다.
+// transparentBackground = false인데 padding을 주면 WebView가 이미 내비바 아래에서
+// 시작하므로 상태바 높이만큼 이중으로 밀린다.
+let appliedTop: number | null = null;
+
+function applySafeAreaInsets(insets?: { top: number }) {
     const app = document.getElementById('app');
     if (!app) return;
 
     try {
-        const insets = SafeAreaInsets.get();
-        console.log('SafeAreaInsets raw value:', JSON.stringify(insets));
+        const top = (insets ?? SafeAreaInsets.get()).top;
 
-        // 네이티브 네비게이션 바가 표시되는 경우 (granite.config의 navigationBar 설정)
-        // WebView는 이미 네비게이션 바 아래에서 시작하므로 top padding 불필요
-        // 단, 상태바(status bar) 영역은 WebView가 덮을 수 있으므로 확인 필요
-        // SDK 2.10.5+: SafeAreaInsets.top = 상태바 + 네비게이션바
-        // 네비게이션바가 네이티브로 표시되면 상태바만큼만 padding 필요
-        // 일반적으로 상태바는 24~44px, 네비게이션바는 44~56px
-        // 테스트: SafeAreaInsets.top이 너무 크면 (>60px) 네비게이션바 높이를 빼야 할 수 있음
+        // 값이 바뀐 경우에만 반영 (구독 콜백이 자주 호출될 수 있음)
+        if (top === appliedTop) return;
+        appliedTop = top;
 
-        // 임시 해결: SafeAreaInsets.top을 0으로 설정
-        // 네이티브 네비게이션 바가 이미 WebView 영역을 제한하고 있다면 padding 불필요
-        const effectiveTop = 0; // 네이티브 헤더가 이미 처리하므로 0
-        app.style.setProperty('--safe-area-top', `${effectiveTop}px`);
-        console.log('SafeAreaInsets applied: effectiveTop =', effectiveTop, '(raw top =', insets.top, ')');
+        app.style.setProperty('--safe-area-top', `${top}px`);
+        console.log('SafeAreaInsets applied: top =', top);
     } catch (e) {
         // fallback: 0px (SDK가 없으면 safe area 없음)
         app.style.setProperty('--safe-area-top', '0px');
+        appliedTop = 0;
         console.warn('SafeAreaInsets not available, using fallback:', e);
     }
 }
@@ -67,11 +54,14 @@ function applySafeAreaInsets() {
 // 초기 적용
 applySafeAreaInsets();
 
-// SafeArea 변경 구독 제거
-// 우리는 항상 effectiveTop = 0을 사용하므로 동적 업데이트가 필요 없음
-// SafeAreaInsets.subscribe를 제거하면 네비게이션 바 버튼 클릭 시
-// 불필요한 콜백 실행을 방지하여 성능 향상
-// (화면 회전 시에도 0을 사용하므로 문제 없음)
+// 화면 모드 변경(회전, 멀티윈도우 등) 시 갱신
+try {
+    SafeAreaInsets.subscribe({
+        onEvent: (insets) => applySafeAreaInsets(insets),
+    });
+} catch (e) {
+    console.warn('SafeAreaInsets.subscribe not available:', e);
+}
 
 // 앱인토스 플랫폼 마커는 index.html의 인라인 스크립트에서 설정됨
 // (iframe보다 먼저 실행되어야 하므로)
@@ -328,229 +318,6 @@ import('@apps-in-toss/web-framework').then(sdk => {
     }
 };
 
-// ========================================
-// 전면 광고 (Interstitial Ad) 브릿지 함수
-// ========================================
-
-const AD_GROUP_ID = import.meta.env.VITE_AD_GROUP_ID_INTERSTITIAL || '';
-
-// 전면 광고 가용 여부 확인
-let interstitialAdAvailable = false;
-
-// 환경변수가 설정되지 않았으면 광고 비활성화
-if (!AD_GROUP_ID) {
-    console.log('Interstitial ad: AD_GROUP_ID not configured, disabling ads');
-} else if (typeof loadFullScreenAd === 'function' && typeof showFullScreenAd === 'function') {
-    // SDK에서 전면 광고 API를 제공하는지 확인
-    // isSupported()가 true를 반환해야만 광고 사용 가능 (더 엄격한 체크)
-    if (typeof (loadFullScreenAd as any).isSupported === 'function') {
-        interstitialAdAvailable = (loadFullScreenAd as any).isSupported();
-        console.log('Interstitial ad isSupported():', interstitialAdAvailable);
-    } else {
-        // isSupported가 없으면 광고 사용 불가로 간주 (dev 환경 등)
-        interstitialAdAvailable = false;
-        console.log('Interstitial ad: isSupported not available, disabling ads');
-    }
-} else {
-    console.log('Interstitial ad API not available');
-}
-
-(window as any).__INTERSTITIAL_AD_AVAILABLE__ = interstitialAdAvailable;
-
-/**
- * 전면 광고 완료 시 게임 iframe에 알림
- * 재시도 로직 포함 - 타이밍 이슈 회피
- */
-function notifyAdComplete() {
-    console.log('Interstitial ad: notifying game iframe');
-
-    let attempts = 0;
-    const maxAttempts = 30; // 최대 30회 재시도 (0.6초)
-    const retryInterval = 20; // 20ms 간격 (더 빠른 응답)
-
-    const tryNotify = () => {
-        attempts++;
-        try {
-            const gameFrame = document.getElementById('game-frame') as HTMLIFrameElement;
-            if (gameFrame && gameFrame.contentWindow) {
-                const callback = (gameFrame.contentWindow as any).__onInterstitialAdComplete__;
-                if (typeof callback === 'function') {
-                    console.log(`Interstitial ad: callback found on attempt ${attempts}, invoking...`);
-                    callback();
-                    console.log('Interstitial ad: game iframe notified successfully');
-                    return true; // 성공
-                }
-            }
-        } catch (e) {
-            console.warn('Interstitial ad: error accessing iframe', e);
-        }
-
-        // 재시도
-        if (attempts < maxAttempts) {
-            console.log(`Interstitial ad: callback not found, retry ${attempts}/${maxAttempts}`);
-            setTimeout(tryNotify, retryInterval);
-        } else {
-            console.error('Interstitial ad: FAILED - callback not found after max attempts');
-            // 최후의 수단: postMessage 시도 (same-origin으로 제한)
-            try {
-                const gameFrame = document.getElementById('game-frame') as HTMLIFrameElement;
-                if (gameFrame && gameFrame.contentWindow) {
-                    // Use same-origin for security instead of '*'
-                    const targetOrigin = window.location.origin;
-                    gameFrame.contentWindow.postMessage({ type: 'adComplete' }, targetOrigin);
-                    console.log('Interstitial ad: sent postMessage as fallback to', targetOrigin);
-                }
-            } catch (e) {
-                console.warn('Interstitial ad: postMessage fallback failed', e);
-            }
-        }
-        return false;
-    };
-
-    tryNotify();
-}
-
-/**
- * 전면 광고 표시
- * 광고를 로드하고 표시함
- *
- * 타임아웃 구조 (3 에이전트 합의):
- * - LOAD_TIMEOUT (8초): loadFullScreenAd 호출 후 'loaded' 이벤트까지
- * - SHOW_TIMEOUT (5초): showFullScreenAd 호출 후 'show' 이벤트까지 (핵심 수정)
- * - VIEWING_TIMEOUT (60초): 광고 표시 후 닫힘 이벤트까지 (SDK 버그 대비)
- */
-(window as any).__showInterstitialAd__ = (): void => {
-    if (!interstitialAdAvailable) {
-        console.log('Interstitial ad not available - skipping');
-        notifyAdComplete();
-        return;
-    }
-
-    let completed = false;
-    let adShowing = false;  // 광고가 실제로 화면에 표시되었는지 추적
-
-    const complete = () => {
-        if (!completed) {
-            completed = true;
-            // Set timestamp for Java-side timeout fallback
-            try {
-                const gameFrame = document.getElementById('game-frame') as HTMLIFrameElement;
-                if (gameFrame && gameFrame.contentWindow) {
-                    (gameFrame.contentWindow as any).__adCompletedTimestamp__ = Date.now();
-                    console.log('Interstitial ad: set completion timestamp for Java fallback');
-                }
-            } catch (e) {
-                console.warn('Interstitial ad: failed to set completion timestamp', e);
-            }
-            notifyAdComplete();
-        }
-    };
-
-    // 타임아웃 상수
-    const LOAD_TIMEOUT = 8000;     // 8초: 로드까지
-    const SHOW_TIMEOUT = 5000;     // 5초: show 이벤트까지 (핵심!)
-    const VIEWING_TIMEOUT = 60000; // 60초: 최대 시청 시간
-
-    let loadTimeout: ReturnType<typeof setTimeout> | null = null;
-    let showTimeout: ReturnType<typeof setTimeout> | null = null;
-    let viewingTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    const clearAllTimeouts = () => {
-        if (loadTimeout) clearTimeout(loadTimeout);
-        if (showTimeout) clearTimeout(showTimeout);
-        if (viewingTimeout) clearTimeout(viewingTimeout);
-    };
-
-    const doShowAd = () => {
-        // show 이벤트 타임아웃 시작 - 광고가 실제로 나타날 때까지 대기
-        showTimeout = setTimeout(() => {
-            if (!adShowing) {
-                console.warn(`Interstitial ad: 'show' event not received within ${SHOW_TIMEOUT/1000}s - skipping ad`);
-                clearAllTimeouts();
-                complete();
-            }
-        }, SHOW_TIMEOUT);
-
-        showFullScreenAd({
-            options: { adGroupId: AD_GROUP_ID },
-            onEvent: (showEvent) => {
-                console.log('Interstitial ad show event:', showEvent.type);
-
-                // 광고가 화면에 표시됨
-                if (showEvent.type === 'show' || showEvent.type === 'impression') {
-                    adShowing = true;
-
-                    // show 타임아웃 취소 - 광고 표시됨
-                    if (showTimeout) {
-                        clearTimeout(showTimeout);
-                        showTimeout = null;
-                    }
-
-                    // viewing 타임아웃 설정 (SDK 버그 대비)
-                    viewingTimeout = setTimeout(() => {
-                        console.warn('Interstitial ad: max viewing time exceeded (60s) - continuing');
-                        complete();
-                    }, VIEWING_TIMEOUT);
-
-                    console.log('Interstitial ad: now visible, show timeout cleared, viewing timeout set');
-                }
-
-                // 광고 종료 이벤트
-                if (showEvent.type === 'dismissed' ||
-                    showEvent.type === 'failedToShow' ||
-                    showEvent.type === 'closed' ||
-                    showEvent.type === 'completed') {
-                    clearAllTimeouts();
-                    complete();
-                }
-            },
-            onError: (err) => {
-                console.warn('Interstitial ad show error:', err);
-                clearAllTimeouts();
-                complete();
-            }
-        });
-    };
-
-    try {
-        console.log('Interstitial ad: loading...');
-
-        // 로드 타임아웃 설정
-        loadTimeout = setTimeout(() => {
-            if (!completed && !adShowing) {
-                console.warn(`Interstitial ad: load timeout (${LOAD_TIMEOUT/1000}s) - ad never loaded`);
-                clearAllTimeouts();
-                complete();
-            }
-        }, LOAD_TIMEOUT);
-
-        loadFullScreenAd({
-            options: { adGroupId: AD_GROUP_ID },
-            onEvent: (event) => {
-                console.log('Interstitial ad load event:', event.type);
-                if (event.type === 'loaded') {
-                    // 로드 타임아웃 취소
-                    if (loadTimeout) {
-                        clearTimeout(loadTimeout);
-                        loadTimeout = null;
-                    }
-                    console.log('Interstitial ad loaded, showing...');
-                    doShowAd();
-                }
-            },
-            onError: (err) => {
-                console.warn('Interstitial ad load error:', err);
-                clearAllTimeouts();
-                complete();
-            }
-        });
-    } catch (e) {
-        console.warn('Interstitial ad exception:', e);
-        clearAllTimeouts();
-        complete();
-    }
-};
-
 // 앱인토스 SDK 초기화 및 배너 광고 로드
 TossAds.initialize({
     callbacks: {
@@ -573,10 +340,12 @@ function loadBannerAd() {
             bannerAdGroupId,
             bannerContainer,
             {
-                // 스타일 옵션 - dark 테마, grey 배경
+                // 스타일 옵션 - dark 테마, grey 톤
+                // AttachBannerOptions = { theme, tone, variant, callbacks }
+                // 'background'는 존재하지 않는 옵션이라 무시된다. 올바른 키는 'tone'.
                 theme: 'dark',
                 variant: 'expanded',
-                background: 'grey',
+                tone: 'grey',
                 callbacks: {
                     onAdRendered: (payload) => {
                         console.log('Banner ad rendered:', payload);

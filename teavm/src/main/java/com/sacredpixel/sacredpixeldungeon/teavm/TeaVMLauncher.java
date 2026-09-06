@@ -29,7 +29,6 @@ import com.badlogic.gdx.Files;
 import com.github.xpenatan.gdx.teavm.backends.web.WebApplication;
 import com.github.xpenatan.gdx.teavm.backends.web.WebApplicationConfiguration;
 import com.sacredpixel.sacredpixeldungeon.CloudSave;
-import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
 import com.sacredpixel.sacredpixeldungeon.Leaderboard;
 import com.sacredpixel.sacredpixeldungeon.Promotion;
 import com.sacredpixel.sacredpixeldungeon.Review;
@@ -63,8 +62,8 @@ public class TeaVMLauncher {
             log("TeaVMLauncher: compression disabled");
 
             // Game.version must be in x.x.x format for RankingsScene version display
-            Game.version = "4.5.6";
-            Game.versionCode = 956;
+            Game.version = "5.0.0";
+            Game.versionCode = 1000;
             log("TeaVMLauncher: version set");
 
             if (UpdateImpl.supportsUpdates()) {
@@ -140,70 +139,6 @@ public class TeaVMLauncher {
                     };
                     log("TeaVMLauncher: Appsintoss cloud save configured");
                 }
-
-                // Set up Appsintoss interstitial ad implementation
-                // 초기화 시점 체크 제거 - 항상 impl 설정하고 show() 내에서 동적 체크
-                InterstitialAd.impl = new InterstitialAd.InterstitialAdImpl() {
-                    private Runnable pendingOnComplete = null;
-
-                    @Override
-                    public void show(Runnable onComplete) {
-                        // 동적으로 isAvailable() 체크 (초기화 타이밍 이슈 회피)
-                        if (TeaVMInterstitialAd.isAvailable()) {
-                            // Store callback for polling-based invocation
-                            pendingOnComplete = onComplete;
-                            TeaVMInterstitialAd.show(new TeaVMInterstitialAd.AdCallback() {
-                                @Override
-                                public void onComplete() {
-                                    // This callback might not be invoked reliably from JS
-                                    // checkCallback() polling handles it instead
-                                }
-                            });
-                        } else {
-                            // 광고 API 없음 - 즉시 콜백 호출
-                            log("TeaVMLauncher: Interstitial ad not available, skipping");
-                            if (onComplete != null) {
-                                onComplete.run();
-                            }
-                        }
-                    }
-
-                    @Override
-                    public boolean isAvailable() {
-                        return TeaVMInterstitialAd.isAvailable();
-                    }
-
-                    @Override
-                    public void checkCallback() {
-                        // Poll for ad completion flag and invoke our callback directly
-                        // DO NOT call TeaVMInterstitialAd.checkAndInvokeCallback() - it clears the flag
-                        // before we can check it, causing our callback to never execute
-                        if (pendingOnComplete != null && TeaVMInterstitialAd.isAdComplete()) {
-                            Runnable cb = pendingOnComplete;
-                            pendingOnComplete = null;
-                            TeaVMInterstitialAd.clearComplete();
-                            cb.run();
-                        }
-                    }
-
-                    @Override
-                    public void block() {
-                        // Clear pending callback to prevent late-loaded ads from triggering
-                        pendingOnComplete = null;
-                        TeaVMInterstitialAd.clearComplete();
-                    }
-
-                    @Override
-                    public double getAdCompletedTimestamp() {
-                        return TeaVMInterstitialAd.getAdCompletedTimestamp();
-                    }
-
-                    @Override
-                    public void clearAdCompletedTimestamp() {
-                        TeaVMInterstitialAd.clearAdCompletedTimestamp();
-                    }
-                };
-                log("TeaVMLauncher: Appsintoss interstitial ad configured");
 
                 // Set up Appsintoss promotion implementation
                 // IMPORTANT: Uses async callback to wait for actual Apps in Toss API result.

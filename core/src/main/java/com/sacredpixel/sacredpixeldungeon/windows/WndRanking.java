@@ -29,7 +29,7 @@ import com.sacredpixel.sacredpixeldungeon.Badges;
 import com.sacredpixel.sacredpixeldungeon.Challenges;
 import com.sacredpixel.sacredpixeldungeon.Dungeon;
 import com.sacredpixel.sacredpixeldungeon.GamesInProgress;
-import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
+import com.sacredpixel.sacredpixeldungeon.Promotion;
 import com.sacredpixel.sacredpixeldungeon.QuickSlot;
 import com.sacredpixel.sacredpixeldungeon.Rankings;
 import com.sacredpixel.sacredpixeldungeon.SacredPixelDungeon;
@@ -536,48 +536,31 @@ public class WndRanking extends WndTabbed {
 							@Override
 							protected void onSelect(int index) {
 								if (index == 0) {
-									// Show interstitial ad every 3rd run (after 2 runs completed)
-									if (SPDSettings.runCountSinceAd() >= 2 && InterstitialAd.isAvailable()) {
-										// Mark third play promotion as pending (for floor 1 reward)
-										if (!SPDSettings.thirdPlayPromotionClaimed()) {
+									// Interstitial ads removed. The run counter now only drives the
+									// third play promotion, granted on floor 1 arrival (GameScene).
+									if (SPDSettings.runCountSinceAd() >= 2) {
+										SPDSettings.runCountSinceAd(0);
+										if (!SPDSettings.thirdPlayPromotionClaimed()
+												&& Promotion.isThirdPlayAvailable()) {
 											SPDSettings.thirdPlayPromotionPending(true);
 										}
-										final String seedCode = DungeonSeed.convertToCode(seed);
-										InterstitialAd.show(() -> {
-											Game.runOnRenderThread(() -> {
-												SPDSettings.runCountSinceAd(0);
-												SPDSettings.customSeed(seedCode);
-												SPDSettings.challenges(challenges);
-												GamesInProgress.selectedClass = record.heroClass;
-												GamesInProgress.curSlot = slot;
-												Dungeon.hero = null;
-												// Initialize seed from SPDSettings BEFORE switching scene
-												Dungeon.initSeed();
-
-												// Clear any lingering action from previous game (e.g., MonkEnergy)
-												ActionIndicator.clearAction();
-												InterlevelScene.mode = InterlevelScene.Mode.DESCEND;
-												WndRanking.this.hide();
-												SacredPixelDungeon.switchNoFade(InterlevelScene.class);
-											});
-										});
-									} else {
-										String seedCode = DungeonSeed.convertToCode(seed);
-
-										SPDSettings.customSeed(seedCode);
-										SPDSettings.challenges(challenges);
-										GamesInProgress.selectedClass = record.heroClass;
-										GamesInProgress.curSlot = slot;
-										Dungeon.hero = null;
-										// Initialize seed from SPDSettings BEFORE switching scene
-										Dungeon.initSeed();
-
-										// Clear any lingering action from previous game (e.g., MonkEnergy)
-										ActionIndicator.clearAction();
-										InterlevelScene.mode = InterlevelScene.Mode.DESCEND;
-										WndRanking.this.hide();
-										SacredPixelDungeon.switchNoFade(InterlevelScene.class);
 									}
+
+									String seedCode = DungeonSeed.convertToCode(seed);
+
+									SPDSettings.customSeed(seedCode);
+									SPDSettings.challenges(challenges);
+									GamesInProgress.selectedClass = record.heroClass;
+									GamesInProgress.curSlot = slot;
+									Dungeon.hero = null;
+									// Initialize seed from SPDSettings BEFORE switching scene
+									Dungeon.initSeed();
+
+									// Clear any lingering action from previous game (e.g., MonkEnergy)
+									ActionIndicator.clearAction();
+									InterlevelScene.mode = InterlevelScene.Mode.DESCEND;
+									WndRanking.this.hide();
+									SacredPixelDungeon.switchNoFade(InterlevelScene.class);
 								}
 							}
 

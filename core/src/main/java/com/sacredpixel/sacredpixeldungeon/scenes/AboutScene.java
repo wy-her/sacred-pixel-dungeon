@@ -139,15 +139,15 @@ public class AboutScene extends PixelScene {
 		content.add(celesti);
 		curY = celesti.bottom() + 5;
 
-		CreditsBlock kristjan = new CreditsBlock(false, Window.SHPX_COLOR,
+		CreditsBlock lumine = new CreditsBlock(false, Window.SHPX_COLOR,
 				"Music:",
-				Icons.KRISTJAN.get(),
-				"Kristjan Haaristo",
-				"youtube.com/@kristjan...",
-				"https://www.youtube.com/@kristjanthomashaaristo");
-		kristjan.setRect(left, curY, colWidth, 0);
-		content.add(kristjan);
-		curY = kristjan.bottom() + 4;
+				Icons.LUMINE.get(),
+				"Lumine Haaristo",
+				"youtube.com/@Lumine...",
+				"https://www.youtube.com/@LumineThomasHaaristo");
+		lumine.setRect(left, curY, colWidth, 0);
+		content.add(lumine);
+		curY = lumine.bottom() + 4;
 
 		addLine(curY, content);
 		curY += 8;

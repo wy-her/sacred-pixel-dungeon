@@ -31,7 +31,6 @@ import com.sacredpixel.sacredpixeldungeon.Challenges;
 import com.sacredpixel.sacredpixeldungeon.Chrome;
 import com.sacredpixel.sacredpixeldungeon.Dungeon;
 import com.sacredpixel.sacredpixeldungeon.GamesInProgress;
-import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
 import com.sacredpixel.sacredpixeldungeon.Leaderboard;
 import com.sacredpixel.sacredpixeldungeon.SPDSettings;
 import com.sacredpixel.sacredpixeldungeon.SacredPixelDungeon;
@@ -641,9 +640,6 @@ public class TitleScene extends PixelScene {
 	@Override
 	public void update() {
 		super.update();
-
-		// Poll for interstitial ad completion callback
-		InterstitialAd.checkCallback();
 
 		if (titleGlow != null) {
 			// Glow cycle: 0.75f = 2x slower than original 1.5f

@@ -2,6 +2,9 @@
 
 Sacred Pixel Dungeon is an HTML5 cross-platform roguelike dungeon crawler and a fan-made fork of [Shattered Pixel Dungeon](https://shatteredpixel.com/shatteredpd/) by [Evan Debenham (00-Evan)](https://github.com/00-Evan).
 
+> **Modified work notice (GPLv3 §5a)** — This is a *modified version* of Shattered Pixel Dungeon v3.3.8.
+> Modified by AI SOFT, initial modification date **2026-04-01**. See [MODIFICATIONS.md](MODIFICATIONS.md) for details.
+
 This project serves as a **gateway to Pixel Dungeon games** — helping new players discover this amazing roguelike genre through accessible browser-based gameplay.
 
 ## Play Now
@@ -50,7 +53,7 @@ The game is **completely free** with **no advertisements** on our official websi
 
 ### Apps in Toss (Korea Only)
 
-The [Apps in Toss](https://toss.im/) version includes **banner ads** and **interstitial ads** to support development costs.
+The [Apps in Toss](https://toss.im/) version includes **banner ads** to support development costs.
 
 **Why ads on this platform?**
 - HTML5 porting requires ongoing maintenance

@@ -10,6 +10,10 @@ export default defineConfig({
   permissions: [],
   navigationBar: {
     theme: 'dark',
+    // 내비게이션 바를 투명하게 만들어 WebView가 화면 최상단부터 시작하도록 한다.
+    // 상태바 회피는 main.ts에서 SafeAreaInsets.top으로 처리한다.
+    // (더보기/X 버튼이 배너 위에 겹치는 것은 의도된 동작)
+    transparentBackground: true,
   },
   web: {
     host: 'localhost',

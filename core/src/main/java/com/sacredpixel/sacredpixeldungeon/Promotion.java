@@ -97,8 +97,62 @@ public class Promotion {
     public static final int TAKING_THE_MICK_REWARD_AMOUNT = PromotionConfig.TAKING_THE_MICK_REWARD_AMOUNT;
     public static final String TAKING_THE_MICK_PROMO_CODE = PromotionConfig.TAKING_THE_MICK_PROMO_CODE;
 
-    // Prevent duplicate requests while one is in flight
+    // Only one grant request may be in flight at a time: the Apps in Toss bridge
+    // runs through a single JS promise chain. Requests that arrive while one is
+    // running are QUEUED, never dropped.
+    //
+    // This matters because several rewards can unlock inside one synchronous call
+    // stack. Amulet.java validates VICTORY_ALL_CLASSES and then CHAMPION_1/2/3 back
+    // to back, so up to four grants are requested before the first callback returns.
+    // Dropping them lost the reward permanently, because the caller only retries
+    // while the badge is still locked.
     private static boolean rewardInFlight = false;
+    private static final java.util.ArrayDeque<PendingReward> pendingRewards = new java.util.ArrayDeque<>();
+
+    private static class PendingReward {
+        final String code;
+        final int amount;
+        final RewardCallback callback;
+
+        PendingReward( String code, int amount, RewardCallback callback ) {
+            this.code = code;
+            this.amount = amount;
+            this.callback = callback;
+        }
+    }
+
+    /**
+     * Queue a reward request. Requests are sent one at a time, in submission order.
+     */
+    private static void submit( String promotionCode, int amount, RewardCallback callback ) {
+        pendingRewards.add(new PendingReward(promotionCode, amount, callback));
+        dispatchNext();
+    }
+
+    private static void dispatchNext() {
+        if (rewardInFlight) return;
+
+        final PendingReward next = pendingRewards.poll();
+        if (next == null) return;
+
+        // impl may have gone away between queueing and dispatch
+        if (impl == null || !impl.isAvailable()) {
+            if (next.callback != null) {
+                next.callback.onResult(false, "Promotion API is not available");
+            }
+            dispatchNext();
+            return;
+        }
+
+        rewardInFlight = true;
+        impl.grantReward(next.code, next.amount, (success, message) -> {
+            rewardInFlight = false;
+            if (next.callback != null) {
+                next.callback.onResult(success, message);
+            }
+            dispatchNext();
+        });
+    }
 
     public interface PromotionImpl {
         /**
@@ -167,21 +221,7 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(TUTORIAL_COMPLETE_PROMO_CODE, TUTORIAL_COMPLETE_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(TUTORIAL_COMPLETE_PROMO_CODE, TUTORIAL_COMPLETE_REWARD_AMOUNT, callback);
     }
 
     /**
@@ -220,21 +260,7 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(TUTORIAL_STEP1_PROMO_CODE, TUTORIAL_STEP1_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(TUTORIAL_STEP1_PROMO_CODE, TUTORIAL_STEP1_REWARD_AMOUNT, callback);
     }
 
     // ==================== Tutorial Step 2 Promotion (Rat Killed) ====================
@@ -275,21 +301,7 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(TUTORIAL_STEP2_PROMO_CODE, TUTORIAL_STEP2_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(TUTORIAL_STEP2_PROMO_CODE, TUTORIAL_STEP2_REWARD_AMOUNT, callback);
     }
 
     // ==================== Tutorial Step 3 Promotion (Snake Killed) ====================
@@ -330,21 +342,7 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(TUTORIAL_STEP3_PROMO_CODE, TUTORIAL_STEP3_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(TUTORIAL_STEP3_PROMO_CODE, TUTORIAL_STEP3_REWARD_AMOUNT, callback);
     }
 
     /**
@@ -383,21 +381,7 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(THIRD_PLAY_PROMO_CODE, THIRD_PLAY_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(THIRD_PLAY_PROMO_CODE, THIRD_PLAY_REWARD_AMOUNT, callback);
     }
 
     /**
@@ -436,21 +420,7 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(TUTORIAL_ENTRY_PROMO_CODE, TUTORIAL_ENTRY_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(TUTORIAL_ENTRY_PROMO_CODE, TUTORIAL_ENTRY_REWARD_AMOUNT, callback);
     }
 
     // ==================== 10-day Streak Promotion ====================
@@ -491,21 +461,7 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(STREAK_10_PROMO_CODE, STREAK_10_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(STREAK_10_PROMO_CODE, STREAK_10_REWARD_AMOUNT, callback);
     }
 
     // ==================== 30-day Streak Promotion ====================
@@ -546,21 +502,7 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(STREAK_30_PROMO_CODE, STREAK_30_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(STREAK_30_PROMO_CODE, STREAK_30_REWARD_AMOUNT, callback);
     }
 
     // ==================== All Classes Victory Badge Promotion ====================
@@ -601,21 +543,7 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(ALL_CLASSES_PROMO_CODE, ALL_CLASSES_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(ALL_CLASSES_PROMO_CODE, ALL_CLASSES_REWARD_AMOUNT, callback);
     }
 
     // ==================== Jack of All Trades Badge Promotion (BOSS_SLAIN_3_ALL_SUBCLASSES - 만물 박사) ====================
@@ -656,21 +584,7 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(JACK_OF_ALL_TRADES_PROMO_CODE, JACK_OF_ALL_TRADES_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(JACK_OF_ALL_TRADES_PROMO_CODE, JACK_OF_ALL_TRADES_REWARD_AMOUNT, callback);
     }
 
     // ==================== Champion 1 Badge Promotion (Bronze - 1+ challenges) ====================
@@ -711,21 +625,7 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(CHAMPION_1_PROMO_CODE, CHAMPION_1_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(CHAMPION_1_PROMO_CODE, CHAMPION_1_REWARD_AMOUNT, callback);
     }
 
     // ==================== Champion 2 Badge Promotion (Silver - 3+ challenges) ====================
@@ -766,21 +666,7 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(CHAMPION_2_PROMO_CODE, CHAMPION_2_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(CHAMPION_2_PROMO_CODE, CHAMPION_2_REWARD_AMOUNT, callback);
     }
 
     // ==================== Champion 3 Badge Promotion (Gold - 6+ challenges) ====================
@@ -821,21 +707,7 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(CHAMPION_3_PROMO_CODE, CHAMPION_3_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(CHAMPION_3_PROMO_CODE, CHAMPION_3_REWARD_AMOUNT, callback);
     }
 
     // ==================== Taking the Mick Badge Promotion ====================
@@ -876,20 +748,6 @@ public class Promotion {
             return;
         }
 
-        if (rewardInFlight) {
-            if (callback != null) {
-                callback.onResult(false, "Promotion reward request is already in progress");
-            }
-            return;
-        }
-
-        rewardInFlight = true;
-
-        impl.grantReward(TAKING_THE_MICK_PROMO_CODE, TAKING_THE_MICK_REWARD_AMOUNT, (success, message) -> {
-            rewardInFlight = false;
-            if (callback != null) {
-                callback.onResult(success, message);
-            }
-        });
+        submit(TAKING_THE_MICK_PROMO_CODE, TAKING_THE_MICK_REWARD_AMOUNT, callback);
     }
 }

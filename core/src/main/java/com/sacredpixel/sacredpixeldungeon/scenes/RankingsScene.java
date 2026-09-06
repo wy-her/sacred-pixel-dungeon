@@ -26,7 +26,6 @@ package com.sacredpixel.sacredpixeldungeon.scenes;
 
 import com.sacredpixel.sacredpixeldungeon.Assets;
 import com.sacredpixel.sacredpixeldungeon.Badges;
-import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
 import com.sacredpixel.sacredpixeldungeon.Rankings;
 import com.sacredpixel.sacredpixeldungeon.SPDAction;
 import com.sacredpixel.sacredpixeldungeon.SPDSettings;
@@ -240,13 +239,6 @@ public class RankingsScene extends PixelScene {
 		} else if (btn instanceof ExitButton) {
 			((ExitButton) btn).icon().brightness(1.5f);
 		}
-	}
-
-	@Override
-	public void update() {
-		super.update();
-		// Poll for interstitial ad completion callback
-		InterstitialAd.checkCallback();
 	}
 
 	@Override

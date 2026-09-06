@@ -491,7 +491,9 @@ public class SPDSettings extends GameSettings {
 		return getBoolean( KEY_FLOOR10_REVIEW_REQUESTED, false );
 	}
 
-	//Interstitial ad tracking (run count since last ad shown)
+	//Run counter driving the third-play promotion.
+	//NOTE: the key string below is intentionally left as "run_count_since_ad" — it predates the
+	//removal of interstitial ads, and renaming it would reset the counter for existing players.
 
 	public static final String KEY_RUN_COUNT_SINCE_AD = "run_count_since_ad";
 

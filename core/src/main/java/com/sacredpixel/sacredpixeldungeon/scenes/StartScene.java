@@ -28,7 +28,6 @@ import com.sacredpixel.sacredpixeldungeon.Assets;
 import com.sacredpixel.sacredpixeldungeon.Badges;
 import com.sacredpixel.sacredpixeldungeon.Chrome;
 import com.sacredpixel.sacredpixeldungeon.GamesInProgress;
-import com.sacredpixel.sacredpixeldungeon.InterstitialAd;
 import com.sacredpixel.sacredpixeldungeon.SPDAction;
 import com.sacredpixel.sacredpixeldungeon.SPDSettings;
 import com.sacredpixel.sacredpixeldungeon.SacredPixelDungeon;
@@ -240,14 +239,6 @@ public class StartScene extends PixelScene {
 
 		// Apply highlight to new focused button (uses background/icon brightness)
 		focusableButtons.get(focusIndex).setFocused(true);
-	}
-
-	@Override
-	public void update() {
-		super.update();
-
-		// Poll for interstitial ad completion callback
-		InterstitialAd.checkCallback();
 	}
 
 	@Override

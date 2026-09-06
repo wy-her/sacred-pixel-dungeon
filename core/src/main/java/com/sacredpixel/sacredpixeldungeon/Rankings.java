@@ -174,7 +174,7 @@ public enum Rankings {
 
 		Badges.validateGamesPlayed();
 
-		// Increment run count for interstitial ad tracking (excludes TestLevel and TutorialLevel runs)
+		// Increment run count for the third-play promotion (excludes TestLevel and TutorialLevel runs)
 		if (!(Dungeon.level instanceof TestLevel) && !(Dungeon.level instanceof TutorialLevel)) {
 			SPDSettings.incrementRunCountSinceAd();
 			// Update streak tracking for consecutive daily play promotions
